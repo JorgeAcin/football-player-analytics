@@ -1,0 +1,43 @@
+---
+title: "MDP I"
+output: word_document
+date: "2025-02-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r librerias, include=FALSE}
+install.packages("readxl")
+library('readxl')
+```
+
+```{r carga, echo=TRUE}
+datos = read_excel("2022-2023_Football_Player_Stats.xlsx")
+dim(datos)
+head(datos, 3)
+summary(datos)
+
+descFut = data.frame("variable" = colnames(datos),
+                      "tipo" = c("text", rep("categorical", 4), rep("numerical", 51)), stringsAsFactors = FALSE)
+# Convertir variables de tipo string a tipo numérico según descFut
+numerical_vars <- descFut$variable[descFut$tipo == "numerical"]
+
+datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
+  as.numeric(as.character(x))
+})
+
+datos <- datos[datos$MatchP >= 5, ]
+```
+
+```{r analisis_estadistico, echo=TRUE}
+summary(datos[,descFut$variable[descFut$tipo == "numerical"]])
+mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
+myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
+myCV = mySD/myMU
+sort(myCV)
+table(datos$Player)
+dim(table(datos$Player)[table(datos$Player) > 1])
+```
+
