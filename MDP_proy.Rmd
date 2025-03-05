@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r librerias, include=FALSE}
 install.packages("readxl")
 library('readxl')
+install.packages('dplyr')
+library(dplyr)
 ```
 
 ```{r carga, echo=TRUE}
@@ -28,7 +30,12 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
 
+# eliminamos los datos que tengan MatchP < 5 y que estén duplicados
 datos <- datos[datos$MatchP >= 5, ]
+duplicados = datos[duplicated(datos$Player) | duplicated(datos$Player, fromLast = TRUE), ]
+duplicados2 = duplicados %>% group_by(Player, Age) %>% filter(Min == max(Min))
+eliminar_dup = anti_join(duplicados, duplicados2, by = c("Player", "Min"))
+datos <- anti_join(datos, eliminar_dup, by = c("Player", "Min"))
 ```
 
 ```{r analisis_estadistico, echo=TRUE}
@@ -37,7 +44,5 @@ mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
 myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
 myCV = mySD/myMU
 sort(myCV)
-table(datos$Player)
-dim(table(datos$Player)[table(datos$Player) > 1])
 ```
 
