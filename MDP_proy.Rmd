@@ -30,9 +30,13 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
 
-# eliminamos los datos que tengan MatchP < 5 y que estén duplicados
+# eliminamos los datos que tengan MatchP < 5
 datos <- datos[datos$MatchP >= 5, ]
+
+# creamos un dataframe que contenga a los jugadores con nombres idénticos
 duplicados = datos[duplicated(datos$Player) | duplicated(datos$Player, fromLast = TRUE), ]
+
+# agrupamos por nombre y edad, y nos quedamos con el que haya jugado más minutos
 duplicados2 = duplicados %>% group_by(Player, Age) %>% filter(Min == max(Min))
 eliminar_dup = anti_join(duplicados, duplicados2, by = c("Player", "Min"))
 datos <- anti_join(datos, eliminar_dup, by = c("Player", "Min"))
