@@ -7,29 +7,52 @@ date: "2025-02-26"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+Carga de librerías
+Primero se cargan las librerías necesarias para la lectura de archivos Excel (readxl) y para la manipulación de datos (dplyr).
 
 ```{r librerias, include=FALSE}
-install.packages("readxl")
 library('readxl')
-install.packages('dplyr')
 library(dplyr)
 ```
+Lectura de datos
 
-```{r carga, echo=TRUE}
+A continuación, se carga el archivo de datos, se muestran las dimensiones y las primeras filas del dataset, y se crea un resumen estadístico. Además, se crea un data frame descFut que contiene el nombre de las variables y su tipo, este data frame es útil para realizar operaciones específicas en función del tipo de variable, como la conversión de tipos de datos o la selección de variables para análisis posteriores.
+
+```{r carga, echo = TRUE}
+# Cargar el archivo de datos
 datos = read_excel("2022-2023_Football_Player_Stats.xlsx")
+
+# Mostrar las dimensiones del dataset
 dim(datos)
+
+# Mostrar las primeras 3 filas del dataset
 head(datos, 3)
+
+# Resumen estadístico del dataset
 summary(datos)
 
+# Crear un data frame con el nombre de las variables y su tipo
 descFut = data.frame("variable" = colnames(datos),
                       "tipo" = c("text", rep("categorical", 4), rep("numerical", 51)), stringsAsFactors = FALSE)
+```
+Conversión de variables
+
+Como algunas variables del dataset eran de tipo string cuando tendíran que ser de tipo númerico, se convierten a tipo numérico utilizando el data frame descFut.
+
+```{r conversión, echo = TRUE}
 # Convertir variables de tipo string a tipo numérico según descFut
 numerical_vars <- descFut$variable[descFut$tipo == "numerical"]
 
 datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
+```
 
+Filtrado de datos
+
+Se filtran los datos para eliminar los jugadores que hayan jugado menos de 5 partidos ya que estos no son relevantes para el objetivo del estudio. Además, los jugadores que habían jugado en varios equipos salían en más de una fila, para evitar esta discrepancia se han agrupado los jugadores (filas) con nombres idénticos y se han borrado las filas de estos que tenían menos minutos disputados.
+
+```{r filtrado, echo = TRUE}
 # eliminamos los datos que tengan MatchP < 5
 datos <- datos[datos$MatchP >= 5, ]
 
@@ -41,6 +64,9 @@ duplicados2 = duplicados %>% group_by(Player, Age) %>% filter(Min == max(Min))
 eliminar_dup = anti_join(duplicados, duplicados2, by = c("Player", "Min"))
 datos <- anti_join(datos, eliminar_dup, by = c("Player", "Min"))
 ```
+Análisis estadístico
+
+Para comprobar que no hay datos anómalos, constantes o inconsistentes se realiza un análisis estadístico de las variables numéricas, calculando la desviación estándar, la media y el coeficiente de variación. Finalmente, se ordena el coeficiente de variación.
 
 ```{r analisis_estadistico, echo=TRUE}
 summary(datos[,descFut$variable[descFut$tipo == "numerical"]])
@@ -49,4 +75,51 @@ myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
 myCV = mySD/myMU
 sort(myCV)
 ```
+Solo encontramos un dato faltante, en la fila 1877, falta 1 valor en la variable categórica nominal Nation, referente al país del jugador David Ozoh. Al ser solamente 1 valor faltante y pudiendo consultarlo fácilmente, le hemos añadido manualmente el valor “ENG”, correspondiente al país de Inglaterra.
+Observando el resumen estadístico no se identificó ninguna variable constante o datos inconsistentes, para una exploración más en detalle se procede a hacer la visualización de estos datos a continuación.
+
+Visualización de datos
+Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.
+
+```{r }
+# Aplicar una transformación logarítmica a las variables numéricas
+datos_log <- datos
+datos_log[numerical_vars] <- lapply(datos_log[numerical_vars], function(x) log1p(x))
+
+# Excluir la variable "Min" de numerical_vars
+numerical_vars_without_min <- setdiff(numerical_vars, "Min")
+
+par(mar = c(9,4,2,2))
+boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Transformación Logarítmica)")
+```
+
+Visualización de datos con transformación logarítmica
+Para mejorar la comparabilidad de las variables, se aplica una transformación logarítmica a las variables numéricas.
+
+```{r}
+# Aplicar una transformación logarítmica a las variables numéricas
+datos_log <- datos
+datos_log[numerical_vars] <- lapply(datos_log[numerical_vars], function(x) log1p(x))
+
+par(mar = c(9,4,2,2))
+boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Transformación Logarítmica)")
+```
+
+Visualización de datos en grupos
+Para mejorar la legibilidad, se dividen las variables en grupos más pequeños y se crean varios gráficos de boxplot.
+
+```{r}
+# Dividir las variables en grupos más pequeños para mejorar la legibilidad
+num_vars <- descFut$variable[descFut$tipo == "numerical"]
+num_vars_groups <- split(num_vars, ceiling(seq_along(num_vars)/10))
+
+par(mfrow = c(2, 2), mar = c(9,4,2,2))  # Dividir la ventana gráfica en una cuadrícula de 2x2
+group_index <- 1
+for (group in num_vars_groups) {
+  boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (Grupo", group_index, ")"))
+  group_index <- group_index + 1
+}
+```
+
+
 
