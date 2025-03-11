@@ -13,6 +13,8 @@ Primero se cargan las librerías necesarias para la lectura de archivos Excel (r
 ```{r librerias, include=FALSE}
 library('readxl')
 library(dplyr)
+library(FactoMineR)
+library(factoextra)
 ```
 Lectura de datos
 
@@ -50,13 +52,11 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
 
 Filtrado de datos
 
-Se filtran los datos para eliminar los jugadores que hayan jugado menos de 5 partidos ya que estos no son relevantes para el objetivo del estudio. Además, los jugadores que habían jugado en varios equipos salían en más de una fila, para evitar esta discrepancia se han agrupado los jugadores (filas) con nombres idénticos y se han borrado las filas de estos que tenían menos minutos disputados.
+Se filtran los datos para eliminar los jugadores que hayan jugado menos de 5 partidos o menos de 200 minutos ya que estos no son relevantes para el objetivo del estudio. Además, los jugadores que habían jugado en varios equipos salían en más de una fila, para evitar esta discrepancia se han agrupado los jugadores (filas) con nombres idénticos y se han borrado las filas de estos que tenían menos minutos disputados.
 
 ```{r filtrado, echo = TRUE}
-# eliminamos los datos que tengan MatchP < 5
-datos <- datos[datos$MatchP >= 5, ]
-
-# creamos un dataframe que contenga a los jugadores con nombres idénticos
+# eliminamos los datos que tengan MatchP < 5 o < 200 minutos
+datos <- datos[datos$MatchP >= 5 & datos$Min >= 200, ]
 duplicados = datos[duplicated(datos$Player) | duplicated(datos$Player, fromLast = TRUE), ]
 
 # agrupamos por nombre y edad, y nos quedamos con el que haya jugado más minutos
@@ -111,15 +111,43 @@ Para mejorar la legibilidad, se dividen las variables en grupos más pequeños y
 ```{r}
 # Dividir las variables en grupos más pequeños para mejorar la legibilidad
 num_vars <- descFut$variable[descFut$tipo == "numerical"]
-num_vars_groups <- split(num_vars, ceiling(seq_along(num_vars)/10))
+
+# Calcular los rangos de las variables
+variable_ranges <- sapply(datos[, num_vars], function(x) max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+
+# Agrupar las variables en categorías lógicas basadas en su magnitud
+group_large <- names(variable_ranges[variable_ranges > 100])
+group_medium <- names(variable_ranges[variable_ranges <= 100 & variable_ranges > 10])
+group_small <- names(variable_ranges[variable_ranges <= 10])
+
+# Crear una lista de grupos
+num_vars_groups <- list(
+  "Large Magnitude" = group_large,
+  "Medium Magnitude" = group_medium,
+  "Small Magnitude" = group_small
+)
 
 par(mfrow = c(2, 2), mar = c(9,4,2,2))  # Dividir la ventana gráfica en una cuadrícula de 2x2
-group_index <- 1
-for (group in num_vars_groups) {
-  boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (Grupo", group_index, ")"))
-  group_index <- group_index + 1
+for (group_name in names(num_vars_groups)) {
+  group <- num_vars_groups[[group_name]]
+  boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (", group_name, ")", sep = ""))
 }
 ```
+
+```{r }
+library(FactoMineR)
+library(factoextra)
+datos2 = datos
+datos2[1:5]
+datos2[, numerical_vars] = scale(datos[, numerical_vars], center = TRUE, scale = TRUE)
+res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 10, 
+        quali.sup = 1:5)
+eig.val <- get_eigenvalue(res.pca)
+VPmedio = 100 * (1/nrow(eig.val))
+fviz_eig(res.pca, addlabels = TRUE) +
+  geom_hline(yintercept=VPmedio, linetype=2, color="red")
+```
+
 
 
 
