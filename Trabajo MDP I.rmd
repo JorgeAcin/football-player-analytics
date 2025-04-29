@@ -19,6 +19,9 @@ library(factoextra)
 library(corrplot)
 library(gridExtra)
 library(grid)
+library(stringr)
+library(writexl)
+library(stringdist)
 ```
 Lectura de datos
 
@@ -137,6 +140,16 @@ for (group_name in names(num_vars_groups)) {
   boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (", group_name, ")", sep = ""))
 }
 ```
+
+Cabe recalcar que el valor de mercado de los jugadores se ha extraído de la web de transfermarkt con ayuda de la inteligencia artificial. El valor de mercado escogido fue el de septiembre de 2022, acorde con el principio de dicha temporada.
+
+Asimismo, hemos corregido los nombres con carácteres desconocidos que se marcaban como '?'.
+
+
+
+
+
+
 
 Selección del número de PCs
 
