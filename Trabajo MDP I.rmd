@@ -218,7 +218,7 @@ Anomalos
 ```{r}
 anomalas = which(miT2 > F99)
 anomalas
-datos[41, ]
+datos[41, ] # cogemos un anómalo por curiosidad, para ver que jugador es
 ```
 
 ```{r }
@@ -272,6 +272,10 @@ mycontrisT2 = contribT2(X = X, scores = misScores, loadings = misLoadings,
                         eigenval = eig.val[1:K,1], observ = which.max(miT2),
                         cutoff = 2)
 ```
+
+El anómalo máximo, apreciamos que es el 756 -> Haaland
+
+
 ```{r }
 par(mar = c(10,2.3,3,1))
 barplot(mycontrisT2[,1],las=2, #cex.names = 0.5,
@@ -295,12 +299,15 @@ barplot(top10_contribs,
 ```
 
 ```{r }
-datos[512,]
+datos[756,]
 ```
 
 Distancia al modelo (SCR)
 
 ```{r }
+myE = X - misScores %*% t(misLoadings) 
+mySCR = rowSums(myE^2)  
+
 # Ajustar el tamaño del gráfico y corregir la visualización
 par(mar = c(5, 5, 4, 2))  # Ajustar los márgenes para mayor claridad
 plot(1:length(mySCR), mySCR, 
@@ -341,6 +348,17 @@ ContriSCR = function(E, SCR) {
 ## Calculamos las contribuciones de todas las observaciones
 mycontris = ContriSCR(E = myE, SCR = mySCR)
 ## Gráfico para Special_K
-barplot(mycontris[512,],las=2, cex.names = 0.7,
-        main=c('Contribuciones a SCR para Jeremy Doku'))
+barplot(mycontris[756,],las=2, cex.names = 0.7,
+        main=c('Contribuciones a SCR para Haaland'))
+```
+
+El AFC no se realizará, debido a que tenemos una gran cantidad de variables númericas, y no se considera relevante.
+
+
+
+
+Ahora pasaremos a realizar el clustering
+
+```{r}
+
 ```
