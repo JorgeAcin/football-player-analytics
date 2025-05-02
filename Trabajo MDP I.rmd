@@ -181,7 +181,7 @@ datos2 = datos
 datos2[1:5,]
 datos2[, numerical_vars] = scale(datos[, numerical_vars], center = TRUE, scale = TRUE)
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 10, 
-        quali.sup = 1:5)
+        quali.sup = 1:5, quanti.sup = 57)
 eig.val <- get_eigenvalue(res.pca)
 VPmedio = 100 * (1/nrow(eig.val))
 fviz_eig(res.pca, addlabels = TRUE) +
@@ -194,10 +194,35 @@ kable(eig.val[1:10,])
 
 Se han seleccionado los primeros 6 componentes principales, ya que permiten retener aproximadamente el 60% de la variabilidad total del conjunto de datos
 
+A partir de estos veamos las 6 primeras componentes principales en los gráficos de variables para ver cuáles contribuyen más a la variable auxiliar valor_mercado
+
+(poner todos los gráficos de variables)
+
+```{r}
+fviz_pca_var(res.pca, axes = c(1,2), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+```{r}
+fviz_pca_var(res.pca, axes = c(3,4), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+
+```{r}
+fviz_pca_var(res.pca, axes = c(5,6), repel = TRUE, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
+```
+
+Como podemos ver, las dimensiones que más contribuyen a la variable auxiliar valor_mercado son las dimensiones 3 y 4, la 5 y la 6 no contribuyen prácticamente nada, por lo que nos quedaremos con las 4 primeras componentes principales
+
+(Explicar el número de dimensiones que hemos elegido es 4 porque la 5 y la 6 no tienen correlación con el valor de mercado y por lo tanto no son importantes, además la 3 y la 4 son las que más correlación tienen con el valor de mercado, hay que mirar si la 1 y la 2 explican la posición del jugador o alguna otra cosa (mirar con los siguientes gráifcos), a parte ya podemos observar en el gráfico de las dimensiones 3 y 4 qué variables explican más el valor de mercado mirando las que tengan la misma dirección que valor_mercado aunque eso lo podremos determinar más adelante)
+
+
 
 ```{r }
-K = 6 #Cambiar: Seleccionar número de componentes después de la limpieza
-res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5)
+K = 4 
+res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
 ```
 Validación del modelo PCA
 
@@ -352,13 +377,23 @@ barplot(mycontris[756,],las=2, cex.names = 0.7,
         main=c('Contribuciones a SCR para Haaland'))
 ```
 
-El AFC no se realizará, debido a que tenemos una gran cantidad de variables númericas, y no se considera relevante.
 
 
 
 
-Ahora pasaremos a realizar el clustering
 
+
+(Hacer aquí la tabla de scores (y biplot si hace falta) para acabar con el PCA)
 ```{r}
 
 ```
+
+
+
+
+
+
+El AFC no se realizará, debido a que tenemos una gran cantidad de variables númericas, y no se considera relevante.
+
+Ahora pasaremos a realizar el clustering
+
