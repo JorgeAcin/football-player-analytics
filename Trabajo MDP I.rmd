@@ -61,6 +61,8 @@ Filtrado de datos
 
 Se filtran los datos para eliminar los jugadores que hayan jugado menos de 5 partidos o menos de 200 minutos ya que estos no son relevantes para el objetivo del estudio. Además, los jugadores que habían jugado en varios equipos salían en más de una fila, para evitar esta discrepancia se han agrupado los jugadores (filas) con nombres idénticos y se han borrado las filas de estos que tenían menos minutos disputados.
 
+Como tampoco contamos con variables que sean relevantes para los guardametas, hemos decidido eliminar dichos jugadores.
+
 ```{r filtrado, echo = TRUE}
 # eliminamos los datos que tengan MatchP < 5 o < 200 minutos
 datos <- datos[datos$MatchP >= 5 & datos$Min >= 200, ]
@@ -71,6 +73,31 @@ duplicados2 = duplicados %>% group_by(Player, Age) %>% filter(Min == max(Min))
 eliminar_dup = anti_join(duplicados, duplicados2, by = c("Player", "Min"))
 datos <- anti_join(datos, eliminar_dup, by = c("Player", "Min"))
 ```
+
+
+
+CAMBIOS DE POSICIONES, COMENTAR TODO TMBN Y REORGANIZAR UN POCO EL SCRIPT
+```{r}
+table(datos$Pos)
+carrileros <- datos$Player[datos$Pos == "DFFW"] 
+carrileros2 <- datos$Player[datos$Pos == "DFMF"] 
+#Como se parecen las juntamos en la misma posición "CAR"
+datos$Pos <- ifelse(datos$Pos %in% c("DFFW", "DFMF"), "CAR", datos$Pos)
+mcds <- datos$Player[datos$Pos == "MFDF"] 
+centrocampistas <- datos$Player[datos$Pos == "MF"]
+#Como se parecen las juntamos en la misma posición "MF"
+datos$Pos <- ifelse(datos$Pos == "MFDF", "MF", datos$Pos)
+#Cambio de nombre a la posición MCO
+datos$Pos <- ifelse(datos$Pos == "MFFW", "MCO", datos$Pos)
+extremos <- datos$Player[datos$Pos == "FWDF"] 
+extremos2 <- datos$Player[datos$Pos == "FWMF"] 
+delanteros <- datos$Player[datos$Pos == "FW"] 
+#Como se parecen las juntamos en la misma posición "FW"
+datos$Pos <- ifelse(datos$Pos %in% c("FWDF", "FWMF"), "FW", datos$Pos)
+table(datos$Pos)
+```
+
+
 Análisis estadístico
 
 Para comprobar que no hay datos anómalos, constantes o inconsistentes se realiza un análisis estadístico de las variables numéricas, calculando la desviación estándar, la media y el coeficiente de variación. Finalmente, se ordena el coeficiente de variación.
@@ -89,15 +116,12 @@ Visualización de datos
 Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.
 
 ```{r }
-# Aplicar una transformación logarítmica a las variables numéricas
-datos_log <- datos
-datos_log[numerical_vars] <- lapply(datos_log[numerical_vars], function(x) log1p(x))
-
 # Excluir la variable "Min" de numerical_vars
 numerical_vars_without_min <- setdiff(numerical_vars, "Min")
 
 par(mar = c(9,4,2,2))
-boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Transformación Logarítmica)")
+boxplot(datos[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Original)")
+
 ```
 
 Visualización de datos con transformación logarítmica
@@ -166,6 +190,9 @@ summary(datos$valor_mercado)
 descFut = data.frame("variable" = colnames(datos),
                       "tipo" = c("text", rep("categorical", 4), rep("numerical", 52)), stringsAsFactors = FALSE)
 
+# eliminamos los porteros
+datos <- datos[datos$Pos != "GK", ]
+
 # Convertir variables de tipo string a tipo numérico según descFut
 numerical_vars <- descFut$variable[descFut$tipo == "numerical"]
 
@@ -224,6 +251,45 @@ Como podemos ver, las dimensiones que más contribuyen a la variable auxiliar va
 K = 4 
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
 ```
+
+
+EXPLICAR Q SE SEPARAN LAS POS EN LA 1 Y 2 Y EN LA 3 Y 4 NO SE VE UNA POLLA
+```{r}
+# Gráficos de scores para los 500 jugadores mejor representados en las PCs 1 y 2
+# coloreados por la posicion y con la elipse de confianza para cada estantería
+
+fviz_pca_ind(res.pca, axes = c(1,2), geom = "point", repel = TRUE, labelsize = 2,
+             select.ind = list("cos2"=500), habillage = "Pos", addEllipses = TRUE)
+
+```
+
+
+```{r}
+fviz_pca_ind(res.pca, axes = c(3,4), geom = "point", repel = TRUE, labelsize = 2,
+             select.ind = list("cos2"=300), habillage = "Pos", addEllipses = TRUE)
+```
+
+```{r}
+fviz_contrib(res.pca, choice = "var", axes = 1)
+fviz_contrib(res.pca, choice = "var", axes = 2)
+fviz_contrib(res.pca, choice = "var", axes = 3)
+fviz_contrib(res.pca, choice = "var", axes = 4)
+```
+
+```{r}
+fviz_pca_biplot(res.pca, axes = c(1,2), labelsize = 3,
+                label = "var", repel = TRUE, 
+                col.ind = datos$Pos)
+
+fviz_pca_biplot(res.pca, axes = c(3,4), labelsize = 3,
+                label = "var", repel = TRUE, 
+                col.ind = datos$Pos)
+```
+
+
+
+
+
 Validación del modelo PCA
 
 Detección de anómalos con T2-Hotelling
@@ -395,5 +461,55 @@ barplot(mycontris[756,],las=2, cex.names = 0.7,
 
 El AFC no se realizará, debido a que tenemos una gran cantidad de variables númericas, y no se considera relevante.
 
-Ahora pasaremos a realizar el clustering
+
+Ahora pasaremos a realizar el clustering.
+
+El objetivo de este es encontrar grupos de futbolistas con características similares en su rendimiento o perfil técnico, gracias a sus estadísticas. 
+Para ello, utilizaremos en el análisis de clustering únicamente las variables numéricas relacionadas con el desempeño y atributos futbolísticos. Posteriormente, intentaremos relacionar los clústeres obtenidos con variables externas, como por ejemplo la posición, el equipo, o la nacionalidad.
+
+Dado que cada variable está medida en diferentes escalas y unidades (por ejemplo, goles, tiros, pases, etc.), usaremos los datos que ya tenemos centrados y escalados de la parte del PCA. Esto es esencial para evitar que las variables de mayor magnitud dominen la estructura de agrupación y asegurar que todas contribuyen de forma equilibrada al proceso de clustering.
+
+```{r}
+midist_euclidea <- get_dist(datos2, stand = FALSE, method = "euclidean")
+fviz_dist(midist_euclidea, show_labels = TRUE, lab_size = 0.3,
+          gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+
+```{r}
+midist_manh <- get_dist(datos2, stand = FALSE, method = "manhattan")
+fviz_dist(midist_manh, show_labels = TRUE, lab_size = 0.3,
+          gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+
+
+
+```{r}
+set.seed(100)
+
+# 1) Extrae solo las numéricas
+numerical_vars <- names(datos2)[ sapply(datos2, is.numeric) ]
+datos_num <- scale(datos2[, numerical_vars])  # ya escalado
+
+# 2) Configura tamaños de muestra (n) y seeds
+myN   <- c(20, 35, 50, 65)
+myseed <- sample(1:1000, length(myN))
+
+# 3) Calcula Hopkins
+myhopkins <- numeric()
+for (i in myN) {
+  for (j in myseed) {
+    tmp <- get_clust_tendency(
+      data  = datos_num,
+      n     = i,
+      graph = FALSE,
+      seed  = j
+    )
+    myhopkins <- c(myhopkins, tmp$hopkins_stat)
+  }
+}
+
+summary(myhopkins)
+```
+El estadístico de Hopkins nos confirma una cierta tendencia de agrupamiento, puesto que ha sido calculado para diferentes valores de m (n en la función) y con diferentes semillas aleatorias y sus valores oscilan entre 0.84 y 0.86, es decir, están cercanos a 1.
+
 
