@@ -207,7 +207,7 @@ Selección del número de PCs
 datos2 = datos
 datos2[1:5,]
 datos2[, numerical_vars] = scale(datos[, numerical_vars], center = TRUE, scale = TRUE)
-res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 10, 
+res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 17, 
         quali.sup = 1:5, quanti.sup = 57)
 eig.val <- get_eigenvalue(res.pca)
 VPmedio = 100 * (1/nrow(eig.val))
@@ -216,7 +216,7 @@ fviz_eig(res.pca, addlabels = TRUE) +
 ```
 
 ```{r }
-kable(eig.val[1:10,])
+kable(eig.val[1:20,])
 ```
 
 Se han seleccionado los primeros 6 componentes principales, ya que permiten retener aproximadamente el 60% de la variabilidad total del conjunto de datos
@@ -351,7 +351,7 @@ contribT2 = function (X, scores, loadings, eigenval, observ, cutoff = 2) {
 ```{r }
 # Selección y escalado de variables numéricas relevantes
 datosNumericos = datos2[,descFut$tipo == "numerical"]
-datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League"))]
+datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League", "valor_mercado"))]
 datosNumericos = scale(datosNumericos, center = TRUE, scale = TRUE)
 X = as.matrix(datosNumericos)
 # Calculamos los loadings a partir de las coordenadas de las variables
@@ -362,6 +362,7 @@ misLoadings = sweep(res.pca$var$coord, 2, sqrt(res.pca$eig[1:K,1]), FUN="/")
 mycontrisT2 = contribT2(X = X, scores = misScores, loadings = misLoadings, 
                         eigenval = eig.val[1:K,1], observ = which.max(miT2),
                         cutoff = 2)
+
 ```
 
 El anómalo máximo, apreciamos que es el 756 -> Haaland
@@ -460,6 +461,9 @@ barplot(mycontris[756,],las=2, cex.names = 0.7,
 
 
 El AFC no se realizará, debido a que tenemos una gran cantidad de variables númericas, y no se considera relevante.
+JUSTIFICARLO Y EXPLICAR DETENIDAMENTE
+
+
 
 
 Ahora pasaremos a realizar el clustering.
@@ -470,46 +474,135 @@ Para ello, utilizaremos en el análisis de clustering únicamente las variables 
 Dado que cada variable está medida en diferentes escalas y unidades (por ejemplo, goles, tiros, pases, etc.), usaremos los datos que ya tenemos centrados y escalados de la parte del PCA. Esto es esencial para evitar que las variables de mayor magnitud dominen la estructura de agrupación y asegurar que todas contribuyen de forma equilibrada al proceso de clustering.
 
 ```{r}
-midist_euclidea <- get_dist(datos2, stand = FALSE, method = "euclidean")
-fviz_dist(midist_euclidea, show_labels = TRUE, lab_size = 0.3,
-          gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+# cogemos K = 16, para explicar un 80% de la variabilidad y además no tener variables incorreladas
+K = 16
+res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
+coords_pca_fut <- res.pca$ind$coord[, 1:K]
+
+
+midist_euclidea <- get_dist(coords_pca_fut, stand = FALSE, method = "euclidean")
+#fviz_dist(midist_euclidea, show_labels = TRUE, lab_size = 0.3,
+          # gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
 ```
 
 ```{r}
-midist_manh <- get_dist(datos2, stand = FALSE, method = "manhattan")
-fviz_dist(midist_manh, show_labels = TRUE, lab_size = 0.3,
-          gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+midist_manh <- get_dist(coords_pca_fut, stand = FALSE, method = "manhattan")
+#fviz_dist(midist_manh, show_labels = TRUE, lab_size = 0.3,
+#         gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
 ```
 
 
 
 ```{r}
-set.seed(100)
+set.seed(69)
 
-# 1) Extrae solo las numéricas
-numerical_vars <- names(datos2)[ sapply(datos2, is.numeric) ]
-datos_num <- scale(datos2[, numerical_vars])  # ya escalado
-
-# 2) Configura tamaños de muestra (n) y seeds
-myN   <- c(20, 35, 50, 65)
-myseed <- sample(1:1000, length(myN))
-
-# 3) Calcula Hopkins
-myhopkins <- numeric()
+myN = c(20, 35, 50, 65)  # m
+myhopkins = NULL
+myseed <- sample(1:1000, 20)
 for (i in myN) {
   for (j in myseed) {
-    tmp <- get_clust_tendency(
-      data  = datos_num,
-      n     = i,
-      graph = FALSE,
-      seed  = j
-    )
-    myhopkins <- c(myhopkins, tmp$hopkins_stat)
+    tmp = get_clust_tendency(data = coords_pca_fut, n = i, graph = FALSE, seed = j)
+    myhopkins = c(myhopkins, tmp$hopkins_stat)
   }
 }
-
 summary(myhopkins)
 ```
 El estadístico de Hopkins nos confirma una cierta tendencia de agrupamiento, puesto que ha sido calculado para diferentes valores de m (n en la función) y con diferentes semillas aleatorias y sus valores oscilan entre 0.84 y 0.86, es decir, están cercanos a 1.
 
 
+```{r}
+library(grid)
+library(gridExtra)
+p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
+                  hc_method = "ward.D2", k.max = 10, verbose = FALSE, 
+                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
+p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "wss", 
+                  hc_method = "ward.D2", k.max = 10, verbose = FALSE, 
+                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r}
+clust1 <- hclust(midist_euclidea, method="ward.D2")
+grupos1 <- cutree(clust1, k=2)
+table(grupos1)
+```
+
+No realizamos el dendograma, debido a que contamos con demasiados jugadores, no llega a aportar ni información y sería excesivamente complicado interpretarlo visualmente
+
+
+```{r}
+p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
+                  hc_method = "average", k.max = 10, verbose = FALSE, 
+                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
+p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "wss", 
+                  hc_method = "average", k.max = 10, verbose = FALSE, 
+                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r}
+clust2 <- hclust(midist_euclidea, method="average")
+grupos2 = cutree(clust2, k = 2)
+table(grupos2)
+```
+
+```{r}
+p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = kmeans, method = "silhouette", 
+             k.max = 10, verbose = FALSE) +
+  labs(title = "K-means")
+p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = kmeans, method = "wss", 
+             k.max = 10, verbose = FALSE) +
+  labs(title = "K-means")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+
+
+
+
+
+```{r}
+library(NbClust)
+library(clValid)
+res.nbclust <- NbClust(data = coords_pca_fut, diss =midist_euclidea , distance = NULL, 
+                        min.nc = 2, max.nc = 5, 
+                        method = "kmeans", index ="all") 
+```
+
+```{r}
+set.seed(100)
+clust3 <- kmeans(coords_pca_fut, centers = 2, nstart = 20)
+table(clust3$cluster)
+```
+
+
+
+
+
+```{r}
+p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = pam, method = "silhouette", 
+             k.max = 10, verbose = FALSE) +
+  labs(title = "Numero optimo de clusters")
+p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = pam, method = "wss", 
+             k.max = 10, verbose = FALSE) +
+  labs(title = "Numero optimo de clusters")
+grid.arrange(p1, p2, nrow = 1)
+```
+```{r}
+clust4 <- pam(coords_pca_fut, k = 2)
+table(clust4$clustering)
+```
+
+
+
+
+```{r}
+library(ggsci)
+colores = pal_npg("nrc")(6)
+colores2 = pal_npg("nrc")(7)
+par(mfrow = c(1,3))
+plot(silhouette(grupos1, midist_euclidea), col=colores, border=NA, main = "WARD")
+plot(silhouette(clust3$cluster, midist_euclidea), col=colores, border=NA, main = "K-MEDIAS")
+plot(silhouette(clust4$clustering, midist_euclidea), col=colores2, border=NA, main = "K-MEDOIDES")
+```
