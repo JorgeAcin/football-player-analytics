@@ -305,6 +305,7 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
 ```
+**Análisis de Componentes Principales (PCA)**
 
 Selección del número de PCs
 
@@ -323,12 +324,9 @@ fviz_eig(res.pca, addlabels = TRUE) +
 ```{r }
 kable(eig.val[1:20,])
 ```
+Para empezar con el PCA, primero analizamos cuántas componentes principales nos interesa conservar. En el gráfico de barras (scree plot) se ve que las 6 primeras componentes explican cerca del 60% de la variabilidad total, así que hemos decidido quedarnos con esas seis.
 
-Se han seleccionado los primeros 6 componentes principales, ya que permiten retener aproximadamente el 60% de la variabilidad total del conjunto de datos
-
-A partir de estos veamos las 6 primeras componentes principales en los gráficos de variables para ver cuáles contribuyen más a la variable auxiliar valor_mercado
-
-(poner todos los gráficos de variables)
+A partir de aquí, veamos los gráficos de variables para ver qué variables tienen más peso en cada componente. Esto nos ayudará a interpretar qué representa cada eje del PCA y, sobre todo, a identificar qué variables están más relacionadas con el valor de mercado, que es la variable que queremos predecir.
 
 ```{r}
 fviz_pca_var(res.pca, axes = c(1,2), repel = TRUE, col.var = "contrib",
@@ -345,20 +343,15 @@ fviz_pca_var(res.pca, axes = c(3,4), repel = TRUE, col.var = "contrib",
 fviz_pca_var(res.pca, axes = c(5,6), repel = TRUE, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
+A partir de los gráficos de variables, observamos que las dimensiones 3 y 4 son las que presentan una mayor correlación con la variable auxiliar `valor_mercado`, ya que su vector se orienta en la misma dirección que varias variables relevantes en ese plano. Esto sugiere que estas dos dimensiones capturan información relacionada con el valor de mercado de los jugadores. Por el contrario, las dimensiones 5 y 6 apenas aportan información útil en este sentido, por lo que las descartamos para el análisis.
 
-Como podemos ver, las dimensiones que más contribuyen a la variable auxiliar valor_mercado son las dimensiones 3 y 4, la 5 y la 6 no contribuyen prácticamente nada, por lo que nos quedaremos con las 4 primeras componentes principales
-
-(Explicar el número de dimensiones que hemos elegido es 4 porque la 5 y la 6 no tienen correlación con el valor de mercado y por lo tanto no son importantes, además la 3 y la 4 son las que más correlación tienen con el valor de mercado, hay que mirar si la 1 y la 2 explican la posición del jugador o alguna otra cosa (mirar con los siguientes gráifcos), a parte ya podemos observar en el gráfico de las dimensiones 3 y 4 qué variables explican más el valor de mercado mirando las que tengan la misma dirección que valor_mercado aunque eso lo podremos determinar más adelante)
-
-
+Por tanto, nos centraremos principalmente en las dimensiones 1 a 4. Aunque las dimensiones 1 y 2 no parecen estar directamente relacionadas con el valor de mercado, podrían estar reflejando otras características importantes, como el estilo o la posición del jugador. En los siguientes gráficos de scores analizaremos si estas dimensiones permiten diferenciar bien a los jugadores según su posición en el terreno de juego.
 
 ```{r }
 K = 4 
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
 ```
 
-
-EXPLICAR Q SE SEPARAN LAS POS EN LA 1 Y 2 Y EN LA 3 Y 4 NO SE VE UNA POLLA
 ```{r}
 # Gráficos de scores para los 500 jugadores mejor representados en las PCs 1 y 2
 # coloreados por la posicion y con la elipse de confianza para cada estantería
@@ -367,29 +360,48 @@ fviz_pca_ind(res.pca, axes = c(1,2), geom = "point", repel = TRUE, labelsize = 2
              select.ind = list("cos2"=500), habillage = "Pos", addEllipses = TRUE)
 
 ```
+En este gráfico de scores representamos a los jugadores según sus coordenadas en las dos primeras componentes principales del PCA, coloreados por su posición en el campo. Se puede observar que las posiciones se separan bastante bien en el plano formado por Dim1 y Dim2, lo que indica que estas dos primeras componentes explican con éxito la posición del jugador en el campo. 
 
+Por ejemplo, los delanteros (FW) se agrupan claramente en la parte izquierda, mientras que los defensores (DF) lo hacen más hacia la derecha. Los centrocampistas (MF) aparecen más centrados, como era de esperar, al estar a medio camino entre tareas defensivas y ofensivas. 
+
+También se aprecia un cierto solapamiento entre algunas posiciones, como los carrileros (CAR), que se extienden a lo largo del gráfico ya que su función varía mucho según el sistema de juego (pueden tener tanto un rol ofensivo como defensivo). Los centrocampistas ofensivos (MCO) se superponen en parte con los delanteros, lo cual tiene sentido porque muchos de ellos juegan cerca del área rival. A su vez, algunos centrocampistas se solapan con los defensores, reflejando su rol en tareas defensivas como la recuperación de balón.
+
+Este gráfico sugiere que las primeras dos dimensiones del PCA reflejan bastante bien la posición y rol táctico de los jugadores, algo que puede ser muy útil para la interpretación posterior y para los análisis de agrupamiento que haremos más adelante.
 
 ```{r}
 fviz_pca_ind(res.pca, axes = c(3,4), geom = "point", repel = TRUE, labelsize = 2,
              select.ind = list("cos2"=300), habillage = "Pos", addEllipses = TRUE)
 ```
+A diferencia del gráfico anterior, como se anticipaba, en este gráfico de las dimensiones 3 y 4 no se aprecia una separación clara entre posiciones. Como podemos ver, los grupos se solapan totalmente entre sí, lo que confirma que estas componentes no capturan bien el rol táctico y posicional de los jugadores en el campo.
 
+
+A continuación, se muestran cuatro gráficos de barras que indican cuánto contribuye cada variable a la construcción de las primeras cuatro componentes principales. Cuanto mayor es la barra, mayor es la influencia de esa variable en la componente correspondiente.
 ```{r}
 fviz_contrib(res.pca, choice = "var", axes = 1)
 fviz_contrib(res.pca, choice = "var", axes = 2)
 fviz_contrib(res.pca, choice = "var", axes = 3)
 fviz_contrib(res.pca, choice = "var", axes = 4)
 ```
+Estos gráficos nos permiten interpretar el significado de cada dimensión: por ejemplo, en Dim1 predominan variables relacionadas con los pases y la actividad ofensiva y defensiva, mientras que en Dim2 tienen más peso las acciones en el tercio ofensivo como asistencias sin gol, centros o conducciones en zona de ataque. En Dim3 y Dim4 destacan variables defensivas como entradas y bloqueos, así como algunas estadísticas asociadas al valor de mercado —es decir, aquellas que en los gráficos de variables anteriores aparecían alineadas con la variable `valor_mercado`—, lo que refuerza la interpretación previa de que esas dimensiones capturan información más económica que posicional.
 
 ```{r}
 fviz_pca_biplot(res.pca, axes = c(1,2), labelsize = 3,
                 label = "var", repel = TRUE, 
                 col.ind = datos$Pos)
+```
+En este biplot representamos simultáneamente a los jugadores (como puntos) y a las variables originales (como flechas) en el plano formado por las dimensiones 1 y 2. Esta visualización nos permite observar cómo se distribuyen los jugadores según su posición, y qué variables influyen más en cada zona del gráfico.
 
+Podemos ver claramente que los delanteros (FW) se agrupan en la zona izquierda, donde predominan variables ofensivas como tiros o conducciones, mientras que los defensores (DF) se concentran a la derecha, cerca de variables relacionadas con despejes o intercepciones. Los centrocampistas (MF y MCO) aparecen más dispersos por el centro del gráfico, lo que tiene sentido dada su variedad de roles. También se puede observar que los carrileros (CAR) aparecen repartidos por todo el plano, lo cual tiene sentido dado su rol mixto entre defensa y ataque. Este gráfico refuerza la idea de que las primeras dos dimensiones del PCA separan bien a los jugadores según su función en el campo.
+
+```{r}
 fviz_pca_biplot(res.pca, axes = c(3,4), labelsize = 3,
                 label = "var", repel = TRUE, 
                 col.ind = datos$Pos)
 ```
+En este segundo biplot, donde se representan las dimensiones 3 y 4, no se aprecia una separación clara entre las posiciones. La mayoría de los puntos están muy concentrados en el centro del gráfico, y las flechas de las variables aparecen muy juntas entre sí.
+
+Esto sugiere que estas dimensiones no son tan útiles para clasificar a los jugadores por su rol o estilo de juego, aunque sí podrían estar capturando otras características más complejas o difíciles de interpretar, como el valor de mercado, tal y como vimos anteriormente en los gráficos de variables.
+
 
 
 **VALIDACIÓN DEL MODELO PCA**
