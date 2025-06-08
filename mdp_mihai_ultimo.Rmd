@@ -286,7 +286,7 @@ fviz_eig(res.pca, addlabels = TRUE) +
 ```{r }
 kable(eig.val[1:20,])
 ```
-Para empezar con el PCA, primero analizamos cuántas componentes principales nos interesa conservar. En el gráfico de barras (scree plot) se ve que las 6 primeras componentes explican cerca del 60% de la variabilidad total, así que hemos decidido quedarnos con esas seis.
+Para empezar con el PCA, primero analizamos cuántas componentes principales nos interesa conservar. En la tabla de eigenvalues observamos que las 6 primeras componentes explican cerca del 60% de la variabilidad total, así que hemos decidido quedarnos con esas seis.
 
 A partir de aquí, veamos los gráficos de variables para ver qué variables tienen más peso en cada componente. Esto nos ayudará a interpretar qué representa cada eje del PCA y, sobre todo, a identificar qué variables están más relacionadas con el valor de mercado, que es la variable que queremos predecir.
 
