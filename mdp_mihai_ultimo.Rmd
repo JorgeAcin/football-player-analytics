@@ -224,6 +224,8 @@ Para visualizar la distribución de las variables numéricas, se crea un diagram
 Para mejorar la comparabilidad de las variables, se aplica una transformación logarítmica a las variables numéricas.
 
 ```{r}
+# Excluir la variable "Min" de numerical_vars
+numerical_vars_without_min <- setdiff(numerical_vars, "Min")
 # Aplicar una transformación logarítmica a las variables numéricas
 datos_log <- datos
 datos_log[numerical_vars] <- lapply(datos_log[numerical_vars], function(x) log1p(x))
@@ -648,17 +650,10 @@ Los resultados muestran que el modelo capta adecuadamente la estructura general 
 Los casos que presentan valores atípicos en T² o SCR no corresponden a errores o problemas de modelado, sino que reflejan perfiles de jugadores extraordinarios, ya sea por un estilo de juego particularmente ofensivo, defensivo o híbrido, o bien por métricas singulares que los hacen sobresalir del patrón común. Es decir, se trata de futbolistas que simplemente se salen de la norma y, por tanto, aportan valor al análisis como ejemplos de diversidad en el rendimiento.
 
 
+**AFC**
 
-
-
-
-
-
-
-
-
-El AFC no se realizará, debido a que tenemos una gran cantidad de variables númericas, y no se considera relevante.
-JUSTIFICARLO Y EXPLICAR DETENIDAMENTE
+Aplicar un Análisis Factorial de Correspondencias (AFC) en este proyecto no sería una decisión adecuada, ya que esta técnica no se ajusta al tipo de datos ni a los objetivos planteados en el estudio. El AFC está diseñado específicamente para explorar relaciones entre variables categóricas, es decir, variables que representan grupos o etiquetas como la nacionalidad, la liga o la posición del jugador. En este trabajo, sin embargo, el análisis gira en torno a un conjunto amplio de variables numéricas que reflejan directamente el rendimiento de los futbolistas durante la temporada, como goles, minutos jugados, asistencias, disparos, entradas o regates.
+El AFC, al centrarse únicamente en variables cualitativas, no permite analizar adecuadamente este tipo de información, por lo que su uso no contribuiría a alcanzar ninguno de los objetivos del proyecto. Además, aunque el conjunto de datos incluye algunas variables categóricas, estas no son el eje central del análisis, sino que actúan más bien como contexto o referencia. Por tanto, aplicar un AFC desviaría el enfoque metodológico y no aportaría resultados útiles ni relevantes dentro de la lógica del trabajo.
 
 
 
