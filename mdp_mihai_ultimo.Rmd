@@ -1,21 +1,32 @@
 ---
 title: "Los Datos detrás del balón - Trabajo Académico MDP I"
-output: word_document
-date: "2025-02-26"
+output:
+  pdf_document:
+    toc: true           # Activa el índice
+    toc_depth: 3        # Nivel de profundidad (1 = solo títulos, 2 = subtítulos, etc.)
+    number_sections: true  # Opcional: numera las secciones
 ---
-*Integrantes del grupo A1-18:* 
-                              - Germán Ríos-Capapé Gómez
-                              - Jorge Acín Zurita 
-                              - Mihai Cristian Mihalache Farcas 
-                              - Robert Torres Mingarro 
-                              - Rubén Tormo Piles 
 
-**INTRODUCCIÓN**
+
+
+*Integrantes del grupo A1-18:*
+
+  - Germán Ríos-Capapé Gómez
+  - Jorge Acín Zurita 
+  - Mihai Cristian Mihalache Farcas 
+  - Robert Torres Mingarro
+  - Rubén Tormo Piles 
+  
+  
+
+# INTRODUCCIÓN
                              
-*Descripción general*
+## Contexto del estudio
 
 El fútbol es un tópico candente que podemos encontrar y escuchar en nuestra vida cotidiana. Siempre hay alguna persona hablando de algún partido, un grupo comentado jugadas de cierto futbolista o simplemente teniendo debates futbolísticos. Este deporte está en auge, y cada vez se intenta hilar más fino para poder optimizar y sacarle el máximo rendimiento a los jugadores y equipos. Prácticamente todo está monitorizado, se puede saber que hace cada jugador en cada partido disputado, y es por ello que cada detalle cuenta. 
 Equipos como el Brentford (en Inglaterra) o el Parma (en Italia), deben gran parte de sus éxitos recientes, como ascender a la primera liga de sus respectivos países, gracias a sus equipos de analistas de datos. Siendo estos conjuntos pioneros en este campo, muchos equipos de talla mundial han seguido sus pasos y han incorporado expertos en análisis de datos en sus filas. Por todo esto, nos resultaba de gran interés realizar un trabajo en esta línea.
+
+## Fuente de datos
 
 Nuestra base de datos recoge estadísticas de jugadores de fútbol en diferentes ligas europeas durante la temporada 2022-2023. Incluye datos generales (edad, equipo, nacionalidad), rendimiento ofensivo (goles, asistencias, disparos), rendimiento defensivo (intercepciones, entradas, despejes) y disciplina (tarjetas, faltas), asimismo cuenta con estadísticas más detalladas en todos estos campos.
 
@@ -28,7 +39,7 @@ Fuente de obtención de los datos:
 La base de datos se obtiene a través de la web de Kaggle: https://www.kaggle.com/datasets/vivovinco/20222023-football-player-stats 
 No obstante, estos datos fueron recopilados de la web de Football Reference: https://fbref.com/en/comps/Big5/stats/players/Big-5-European-Leagues-Stats
 
-*Descripción de las variables*
+## Descripción de las variables
 
 Después de realizar una primera fase de limpieza donde nos quedamos con las variables que consideramos relevantes:
 
@@ -97,7 +108,7 @@ Vamos a describir todas las variables empleadas:
 55. **AerLost** – Cuantitativa continua: Duelos aéreos perdidos
 56. **AerWon%** – Cuantitativa continua: Porcentaje de duelos aéreos ganados
 
-*Objetivos del estudio*
+## Objetivos del estudio
 
 Nuestros objetivos del trabajo son varios: 
 
@@ -113,8 +124,11 @@ Continuando en esa línea, predecir si el valor de mercado de un futbolista es A
 knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
 ```
+
+<!--
 Carga de librerías
 Primero se cargan las librerías necesarias para la lectura de archivos Excel (readxl) y para la manipulación de datos (dplyr).
+-->
 
 ```{r librerias, include=FALSE}
 library('readxl')
@@ -129,13 +143,13 @@ library(writexl)
 library(stringdist)
 ```
 
-**Preproceso de los Datos y Análisis Exploratorio Inicials**
+# Preproceso de los Datos y Análisis Exploratorio Inicial
 
-*Lectura de datos*
+## Lectura de datos
 
-A continuación, se carga el archivo de datos, se muestran las dimensiones y las primeras filas del dataset, y se crea un resumen estadístico (se puede consultar en el *ANEXO 1*). Además, se crea un data frame descFut que contiene el nombre de las variables y su tipo, este data frame es útil para realizar operaciones específicas en función del tipo de variable, como la conversión de tipos de datos o la selección de variables para análisis posteriores.
+Cargamos el archivo de datos mediante la función `read_excel()`. Se muestran las dimensiones y las primeras filas del dataset, y se crea un resumen estadístico (se puede consultar en el *ANEXO 1*). Además, se crea un data frame *descFut* que contiene el nombre de las variables y su tipo, este data frame es útil para realizar operaciones específicas en función del tipo de variable, como la conversión de tipos de datos o la selección de variables para análisis posteriores.
 
-```{r carga, echo = FALSE}
+```{r carga_datos}
 # Cargar el archivo de datos
 datos = read_excel("2022-2023_Football_Player_Stats.xlsx")
 
@@ -143,10 +157,12 @@ datos = read_excel("2022-2023_Football_Player_Stats.xlsx")
 descFut = data.frame("variable" = colnames(datos),
                       "tipo" = c("text", rep("categorical", 4), rep("numerical", 51)), stringsAsFactors = FALSE)
 ```
-*Conversión de variables*
 
-Como algunas variables del dataset eran de tipo string cuando tendíran que ser de tipo númerico, se convierten a tipo numérico utilizando el data frame descFut.
-```{r conversión, echo = FALSE}
+## Conversión de variables
+
+Como algunas variables del dataset eran de tipo string cuando tendrían que ser de tipo númerico, se convierten a tipo numérico utilizando el data frame descFut.
+
+```{r conversión}
 # Convertir variables de tipo string a tipo numérico según descFut
 numerical_vars <- descFut$variable[descFut$tipo == "numerical"]
 
@@ -154,13 +170,14 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
 ```
-*Filtrado de datos*
+
+## Filtrado de datos
 
 Se filtran los datos para eliminar los jugadores que hayan jugado menos de 5 partidos o menos de 200 minutos ya que estos no son relevantes para el objetivo del estudio. Además, los jugadores que habían jugado en varios equipos salían en más de una fila, para evitar esta discrepancia se han agrupado los jugadores (filas) con nombres idénticos y se han borrado las filas de estos que tenían menos minutos disputados.
 
 Como tampoco contamos con variables que sean relevantes para los guardametas, hemos decidido eliminar dichos jugadores.
 
-```{r filtrado, echo = TRUE}
+```{r filtrado}
 # eliminamos los datos que tengan MatchP < 5 o < 200 minutos
 datos <- datos[datos$MatchP >= 5 & datos$Min >= 200, ]
 duplicados = datos[duplicated(datos$Player) | duplicated(datos$Player, fromLast = TRUE), ]
@@ -172,24 +189,25 @@ datos <- anti_join(datos, eliminar_dup, by = c("Player", "Min"))
 ```
 
 
-*CAMBIOS DE POSICIONES*
+## CAMBIOS DE POSICIONES
 
 Podemos apreciar como la base de datos cuenta con posiciones muy concretas u otras que reflejan roles mixtos (por ejemplo, jugadores que actúan entre defensa y centro del campo, o entre extremos y delantera). Para facilitar el análisis y reducir la complejidad de las categorías, se han realizado las siguientes agrupaciones de manera razonada:
 
-1. DFFW y DFMF se agrupan como "CAR" (carrileros) Estas posiciones representan jugadores que ocupan la banda, combinando funciones defensivas y ofensivas.
+1. *DFFW* y *DFMF* se agrupan como *"CAR"* (carrileros) Estas posiciones representan jugadores que ocupan la banda, combinando funciones defensivas y ofensivas.
 
-2. MFDF se han reasignado como "MF" (centrocampistas)Este tipo de jugador tiene un perfil defensivo dentro del centro del campo (habitualmente mediocentros defensivos o pivotes).
+2. *MFDF* se han reasignado como *"MF"* (centrocampistas)Este tipo de jugador tiene un perfil defensivo dentro del centro del campo (habitualmente mediocentros defensivos o pivotes).
 
-Se agrupa con "MF" porque se encuadra dentro del rol de centrocampista, solo que con un matiz más defensivo que no se analiza por separado.
+Se agrupa con *"MF"* porque se encuadra dentro del rol de centrocampista, solo que con un matiz más defensivo que no se analiza por separado.
 
-3. MFFW → renombrado como "MCO" (mediocentro ofensivo). Son jugadores que se mueven entre el centro del campo y la delantera, cumpliendo típicamente la función de mediapunta o enganche, un nº10 de toda la vida.
+3. *MFFW* → renombrado como *"MCO"* (mediocentro ofensivo). Son jugadores que se mueven entre el centro del campo y la delantera, cumpliendo típicamente la función de mediapunta o enganche, un nº10 de toda la vida.
 
-4. FWDF y FWMF → agrupados como "FW" (delanteros) Son jugadores que tienen una orientación ofensiva clara. Su posición base es la de atacante.
+4. *FWDF* y *FWMF* → agrupados como *"FW"* (delanteros) Son jugadores que tienen una orientación ofensiva clara. Su posición base es la de atacante.
 
-Se les incluye en "FW", simplificando la taxonomía sin perder la esencia de su rol principal: atacar.
+Se les incluye en *"FW"*, simplificando la taxonomía sin perder la esencia de su rol principal: atacar.
 
 De esta manera reduciremos la dispersión. Además, agruparemos a los jugadores por las posiciones más claras y esenciales del fútbol, basadas en su zona de influencia predominante.
-```{r}
+
+```{r cambo_posiciones, include=FALSE}
 table(datos$Pos)
 carrileros <- datos$Player[datos$Pos == "DFFW"] 
 carrileros2 <- datos$Player[datos$Pos == "DFMF"] 
@@ -208,33 +226,35 @@ delanteros <- datos$Player[datos$Pos == "FW"]
 datos$Pos <- ifelse(datos$Pos %in% c("FWDF", "FWMF"), "FW", datos$Pos)
 table(datos$Pos[datos$Pos != "GK"])
 ```
-*Análisis estadístico*
+## Análisis estadístico
 
 Para comprobar que no hay datos anómalos, constantes o inconsistentes se realiza un análisis estadístico de las variables numéricas, calculando la desviación estándar, la media y el coeficiente de variación. Finalmente, se ordena el coeficiente de variación.
 
-Solo encontramos un dato faltante, en la fila 1877, falta 1 valor en la variable categórica nominal Nation, referente al país del jugador David Ozoh. Al ser solamente 1 valor faltante y pudiendo consultarlo fácilmente, le hemos añadido manualmente el valor “ENG”, correspondiente al país de Inglaterra.
+Solo encontramos un dato faltante, en la fila 1877, falta 1 valor en la variable categórica nominal `Nation`, referente al país del jugador *David Ozoh*. Al ser solamente 1 valor faltante y pudiendo consultarlo fácilmente, le hemos añadido manualmente el valor *“ENG”*, correspondiente al país de Inglaterra.
 
 Observando el resumen estadístico (*ANEXO 2*) no se identificó ninguna variable constante o datos inconsistentes, para una exploración más en detalle se procede a hacer la visualización de estos datos a continuación.
 
-*Visualización de datos*
+## Visualización de datos
 
 Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.(*ANEXO 3*)
 
-*Visualización de datos con transformación logarítmica*
+## Visualización de datos con transformación logarítmica
+
 Para mejorar la comparabilidad de las variables, se aplica una transformación logarítmica a las variables numéricas (*ANEXO 4*)
 
-*Visualización de datos en grupos*
+## Visualización de datos en grupos
+
 Para mejorar la legibilidad, se dividen las variables en grupos más pequeños y se crean varios gráficos de boxplot.(*ANEXO 5*)
 
-Después de realizar las visualizaciones de como se distribuyen las estdísticas de los jugadores, apreciamos como hay anómalos en casi todas las variables. Ya que no hay un error en la entrada de datos, estos serán jugadores que destaquen (positivamente o negativamente) en dicha variable
+Después de realizar las visualizaciones de como se distribuyen las estadísticas de los jugadores, apreciamos como hay anómalos en casi todas las variables. Ya que no hay un error en la entrada de datos, estos serán jugadores que destaquen (positivamente o negativamente) en dicha variable
 
 **Añadir el Valor de Mercado**
 
 Para poder llegar a completar nuestros objetivos, además de añadir una variable sumamente interesante para nuestros análisis procederemos a añadir los valores de mercado de los futbolistas de nuestro dataset.Cabe recalcar que el valor de mercado de los jugadores se ha extraído de la web de transfermarkt con ayuda de la inteligencia artificial. El valor de mercado escogido fue el de septiembre de 2022, acorde con el principio de dicha temporada.
 
-Asimismo, hemos corregido los nombres con carácteres desconocidos que se marcaban como '?'.
+Asimismo, hemos corregido los nombres con carácteres desconocidos que se marcaban como *'?'*.
 
-```{r}
+```{r resumen_estadístico, include=FALSE}
 # Leer el archivo Excel, saltando la primera fila y seleccionando solo las dos primeras columnas
 valores_mercado <- read_excel("nombres_valores.xlsx") %>%
   slice(1:1920)
@@ -267,11 +287,13 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
 ```
 Observando el resumen estadístico del valor de mercado de los futbolistas se revela una fuerte desigualdad. Aunque el valor medio se sitúa en 11,69 millones, la mediana es notablemente inferior (5 millones), lo que indica que la mayoría de los jugadores tienen un valor relativamente bajo y que existen unos pocos con cifras extremadamente altas que elevan la media. De hecho, el valor máximo alcanza los 160 millones, evidenciando la presencia de superestrellas con precios desorbitados. Por otro lado, un 25% de los jugadores no supera los 2 millones, y el 75% se encuentra por debajo de los 15 millones, lo que confirma que el grueso del mercado está formado por jugadores de menor coste.
 
-**Análisis de Componentes Principales (PCA)**
+# Análisis de Componentes Principales (PCA)
 
-Selección del número de PCs
+El objetivo de aplicar un Análisis de Componentes Principales (PCA) en nuestro trabajo es reducir la dimensionalidad del conjunto de datos, simplificando la gran cantidad de variables disponibles en un número reducido de componentes que retengan la mayor parte de la información. Esto nos ayudará a identificar patrones generales y a representar de forma más clara las diferencias entre jugadores, algo especialmente útil para los análisis de segmentación y comparación que realizaremos más adelante.
 
-```{r, message=FALSE, warning=FALSE}
+## Selección del número de PCs
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 datos2 = datos
 datos2[, numerical_vars] = scale(datos[, numerical_vars], center = TRUE, scale = TRUE)
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 17, 
@@ -279,35 +301,44 @@ res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 17,
 eig.val <- get_eigenvalue(res.pca)
 kable(eig.val[1:20,])
 ```
-Para empezar con el PCA, primero analizamos cuántas componentes principales nos interesa conservar. En la tabla de eigenvalues observamos que las 6 primeras componentes explican cerca del 60% de la variabilidad total, así que hemos decidido quedarnos con esas seis.
+Para empezar con el PCA, primero analizamos cuántas componentes principales nos interesa conservar. En la tabla de eigenvalues (*ANEXO 6*) observamos que las 6 primeras componentes explican cerca del 60% de la variabilidad total, así que hemos decidido quedarnos con esas seis en un principio.
 
-A partir de aquí, veamos los gráficos de variables para ver qué variables tienen más peso en cada componente. Esto nos ayudará a interpretar qué representa cada eje del PCA y, sobre todo, a identificar qué variables están más relacionadas con el valor de mercado, que es la variable que queremos predecir.
+## Gráficos de variables
 
-```{r}
+A partir de aquí, veamos los gráficos de variables para ver qué variables tienen más peso en cada componente. Esto nos ayudará a interpretar qué representa cada eje del PCA y, sobre todo, a identificar qué variables están más relacionadas con el valor de mercado, que es la variable que queremos predecir. También nos ayudará a identificar si las seis componentes principales nos son útiles en el análisis o tenemos que quedarnos con alguna menos.
+
+Aquí podemos observar los tres gráficos de variables obtenidos, cada uno con sus correspondientes componentes principales:
+
+```{r grafico_var_PC1_PC2, fig.width=5, fig.height=3}
 fviz_pca_var(res.pca, axes = c(1,2), repel = TRUE, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
 
-```{r}
+```{r grafico_var_PC3_PC4, fig.width=5, fig.height=3}
 fviz_pca_var(res.pca, axes = c(3,4), repel = TRUE, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
 
 
-```{r}
+```{r grafico_var_PC5_PC6, fig.width=5, fig.height=3}
 fviz_pca_var(res.pca, axes = c(5,6), repel = TRUE, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
+
 A partir de los gráficos de variables, observamos que las dimensiones 3 y 4 son las que presentan una mayor correlación con la variable auxiliar `valor_mercado`, ya que su vector se orienta en la misma dirección que varias variables relevantes en ese plano. Esto sugiere que estas dos dimensiones capturan información relacionada con el valor de mercado de los jugadores. Por el contrario, las dimensiones 5 y 6 apenas aportan información útil en este sentido, por lo que las descartamos para el análisis.
 
-Por tanto, nos centraremos principalmente en las dimensiones 1 a 4. Aunque las dimensiones 1 y 2 no parecen estar directamente relacionadas con el valor de mercado, podrían estar reflejando otras características importantes, como el estilo o la posición del jugador. En los siguientes gráficos de scores analizaremos si estas dimensiones permiten diferenciar bien a los jugadores según su posición en el terreno de juego.
+Por tanto, nos centraremos principalmente en las dimensiones que van de la 1 a la 4. Aunque las dimensiones 1 y 2 no parecen estar directamente relacionadas con el valor de mercado, podrían estar reflejando otras características importantes, como el estilo o la posición del jugador. En los siguientes gráficos de scores analizaremos si estas dimensiones permiten diferenciar bien a los jugadores según su posición en el terreno de juego.
 
-```{r }
+```{r PCA_final}
 K = 4 
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
 ```
 
-```{r}
+## Gráficos de scores
+
+Vamos a realizar ahora los gráficos de scores para las diferentes componentes seleccionadas, coloreados por la posición y con la elipse de confianza para cada estantería. Esto lo hacemos con el fin de visualizar cómo se distribuyen los jugadores en el nuevo espacio de componentes principales.
+
+```{r grafico_scores_PC1_PC2, fig.width=5, fig.height=3}
 # Gráficos de scores para los 500 jugadores mejor representados en las PCs 1 y 2
 # coloreados por la posicion y con la elipse de confianza para cada estantería
 
@@ -317,35 +348,35 @@ fviz_pca_ind(res.pca, axes = c(1,2), geom = "point", repel = TRUE, labelsize = 2
 ```
 En este gráfico de scores representamos a los jugadores según sus coordenadas en las dos primeras componentes principales del PCA, coloreados por su posición en el campo. Se puede observar que las posiciones se separan bastante bien en el plano formado por Dim1 y Dim2, lo que indica que estas dos primeras componentes explican con éxito la posición del jugador en el campo. 
 
-Por ejemplo, los delanteros (FW) se agrupan claramente en la parte izquierda, mientras que los defensores (DF) lo hacen más hacia la derecha. Los centrocampistas (MF) aparecen más centrados, como era de esperar, al estar a medio camino entre tareas defensivas y ofensivas. 
+Por ejemplo, los delanteros *(FW)* se agrupan claramente en la parte izquierda, mientras que los defensores *(DF)* lo hacen más hacia la derecha. Los centrocampistas *(MF)* aparecen más centrados, como era de esperar, al estar a medio camino entre tareas defensivas y ofensivas. 
 
-También se aprecia un cierto solapamiento entre algunas posiciones, como los carrileros (CAR), que se extienden a lo largo del gráfico ya que su función varía mucho según el sistema de juego (pueden tener tanto un rol ofensivo como defensivo). Los centrocampistas ofensivos (MCO) se superponen en parte con los delanteros, lo cual tiene sentido porque muchos de ellos juegan cerca del área rival. A su vez, algunos centrocampistas se solapan con los defensores, reflejando su rol en tareas defensivas como la recuperación de balón.
+También se aprecia un cierto solapamiento entre algunas posiciones, como los carrileros *(CAR)*, que se extienden a lo largo del gráfico ya que su función varía mucho según el sistema de juego (pueden tener tanto un rol ofensivo como defensivo). Los centrocampistas ofensivos *(MCO)* se superponen en parte con los delanteros, lo cual tiene sentido porque muchos de ellos juegan cerca del área rival. A su vez, algunos centrocampistas se solapan con los defensores, reflejando su rol en tareas defensivas como la recuperación de balón.
 
 Este gráfico sugiere que las primeras dos dimensiones del PCA reflejan bastante bien la posición y rol táctico de los jugadores, algo que puede ser muy útil para la interpretación posterior y para los análisis de agrupamiento que haremos más adelante.
 
-```{r}
-fviz_pca_ind(res.pca, axes = c(3,4), geom = "point", repel = TRUE, labelsize = 2,
+```{r grafico_scores_PC3_PC4, include=FALSE}
+graf_scores_34 = fviz_pca_ind(res.pca, axes = c(3,4), geom = "point", repel = TRUE, labelsize = 2,
              select.ind = list("cos2"=300), habillage = "Pos", addEllipses = TRUE)
 ```
-A diferencia del gráfico anterior, como se anticipaba, en este gráfico de las dimensiones 3 y 4 no se aprecia una separación clara entre posiciones. Como podemos ver, los grupos se solapan totalmente entre sí, lo que confirma que estas componentes no capturan bien el rol táctico y posicional de los jugadores en el campo.
+
+A diferencia del gráfico que acabamos de ver, como se anticipaba, en el gráfico de las dimensiones 3 y 4 (*ANEXO 7*) no se aprecia una separación clara entre posiciones. Los grupos se solapan totalmente entre sí, lo que confirma que estas componentes no capturan bien el rol táctico y posicional de los jugadores en el campo.
 
 (Ver Scree Plot en el Anexo 6)
 (Ver los gráficos de contribución en el Anexo 7 para comprobar qué variables influyen más en cada una de las primeras componentes)
 (Ver los biplots de las componentes 1–4 en el Anexo 8 para más detalle visual sobre la distribución y orientación de las variables y jugadores)
 
 
-
 **VALIDACIÓN DEL MODELO PCA**
 
-Después de haber sacado las conclusiones pertinentes al realizar el Análisis de Componentes Principales, procederemos a la validación del modelo PCA,y comprobar si todo lo que hemos realizado no ha estado condicionado por ningún anómalo que ha alterado nuestros resultados y conclusiones.
+Después de haber sacado las conclusiones pertinentes al realizar el Análisis de Componentes Principales, procederemos a la validación del modelo PCA, y a comprobar si todo lo que hemos realizado no ha estado condicionado por ningún anómalo que ha alterado nuestros resultados y conclusiones.
 
-Primeramente realizaremos la detección de anómalos con T2-Hotelling
+Primeramente realizaremos la detección de anómalos con T2-Hotelling (*ANEXO 8*).
 
-El estadístico nos permite identificar valores anómalos extremos, que podrían estar condicionando el modelo, es decir, la creación de las PCs. Este estadístico se calcula a partir de los scores. Por ello, visualizaremos también los gráficos de scores para las PCs seleccionadas, además del gráfico con los valores del T2 tomando las 3 Ps e incluyendo los límites de confianza al 95% y 99%, en naranja y rojo, respectivamente.
+El estadístico nos permite identificar valores anómalos extremos, que podrían estar condicionando el modelo, es decir, la creación de las PCs. Este estadístico se calcula a partir de los scores. Por ello, visualizaremos también los gráficos de scores para las PCs seleccionadas, además del gráfico con los valores del T2 tomando las 3 PCs e incluyendo los límites de confianza al 95% y 99%, en naranja y rojo, respectivamente.
 
 Estamos identificando jugadores que se comportan de forma inusual en el espacio de las primeras K componentes principales. Aquellos que tengan un valor de T² superior al umbral del 95% o 99% podrían ser considerados atípicos. Esto es útil para análisis de calidad, detección de errores o exploración de perfiles futbolísticos únicos dentro de nuestro Dataset.
 
-```{r }
+```{r T2_hotelling, include=FALSE}
 misScores = res.pca$ind$coord[,1:K]
 miT2 = colSums(t(misScores**2)/eig.val[1:K,1])
 I = nrow(datos2)
@@ -360,20 +391,22 @@ La mayoría de los futbolistas tienen valores de T² entre 0 y 10, por lo que es
 
 Un grupo pequeño de jugadores superan el umbral y cuentan con una T² > F95, algunos incluso > F99.
 
-Vamos a descubrir quienes son estos jugadores anómalos:
-```{r}
+Vamos a descubrir quienes son estos jugadores anómalos (*ANEXO 9*):
+
+```{r jugadores_anómalos, include=FALSE}
 # Jugadores con T2 superior al umbral del 99%
 which(miT2 > F99)
 
 # vemos los nombres de los jugadores con T2 superior al umbral del 99%
 datos2[which(miT2 > F99), "Player"]
 ```
-Solamente 28 jugadores superan el umbral del 99%. No obstante, si leemos atentamente los nombres podemos encontrar jugadores de talla mundial como Kevin de Bruyne, Toni Kroos o Kylian Mbappé. Por otra parte también encontramos jóvenes promesas el francés Rayan Cherki. 
+Solamente 28 jugadores superan el umbral del 99%. No obstante, si leemos atentamente los nombres podemos encontrar jugadores de talla mundial como *Kevin de Bruyne*, *Toni Kroos* o *Kylian Mbappé*. Por otra parte, también encontramos jóvenes promesas como el francés *Rayan Cherki*. 
 Algo que en principio no debería de alarmarnos, ya que son excelsos futbolistas que destacan fuertemente sobre los demás gracias a su juego.
 
 
-Vamos a generar dos gráficos PCA en paralelo, con los jugadores coloreados según si son atípicos multivariantes fuertes (es decir, si su estadístico Hotelling T² supera el umbral del 99%).
-```{r }
+Vamos a generar ahora dos gráficos PCA en paralelo, con los jugadores coloreados según si son atípicos multivariantes fuertes (es decir, si su estadístico Hotelling T² supera el umbral del 99%).
+
+```{r PCA_T2}
 p1 = fviz_pca_ind(res.pca, axes = c(1,2), geom = c("point"),
                   habillage = factor(miT2 > F99))
 
@@ -398,7 +431,7 @@ No obstante, mantendremos en el modelo a dichos jugadores porque, dado que estam
 
 Por otra parte, podemos emplear el gráfico de contribuciones a la T2 de Hotelling para entender qué variables contribuyen más a que esa observación haya resultado anómala.
 
-```{r }
+```{r función_contrib}
 contribT2 = function (X, scores, loadings, eigenval, observ, cutoff = 2) {
   # X is data matrix and must be centered (or centered and scaled if data were scaled)
   misScoresNorm = t(t(scores**2) / eigenval)
@@ -416,7 +449,7 @@ contribT2 = function (X, scores, loadings, eigenval, observ, cutoff = 2) {
 }
 ```
 
-```{r }
+```{r contribuciones, include=FALSE}
 # Selección y escalado de variables numéricas relevantes
 datosNumericos = datos2[,descFut$tipo == "numerical"]
 datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League", "valor_mercado"))]
@@ -430,13 +463,13 @@ misLoadings = sweep(res.pca$var$coord, 2, sqrt(res.pca$eig[1:K,1]), FUN="/")
 mycontrisT2 = contribT2(X = X, scores = misScores, loadings = misLoadings, 
                         eigenval = eig.val[1:K,1], observ = which.max(miT2),
                         cutoff = 2)
-
 ```
 
-El anómalo máximo, apreciamos que es el 1619 -> Aleksa Terzić
+Para ello, encontramos que el anómalo máximo es el 1619 -> *Aleksa Terzić* (*ANEXO 10*)
 
-Realicemos un gráfico de barras del jugador más anómalo del conjunto de datos según el estadístico Hotelling T²:
-```{r }
+Vamos entonces a realizar un gráfico de barras del jugador más anómalo del conjunto de datos según el estadístico Hotelling T². 
+
+```{r grácio_valor_anómalo, include=FALSE}
 par(mar = c(10,2.3,3,1))
 barplot(mycontrisT2[,1],las=2, cex.names = 0.5,
         main= paste0("Observación: ", rownames(datos)[which.max(miT2)]))
@@ -447,25 +480,25 @@ La estadístoca de CrsPA (Centros al área rival completados por partido) es ext
 
 Otras variables destacadas:
 
-- PPA (Pases al área rival): tiene un valor alto.
+- *PPA* (Pases al área rival): tiene un valor alto.
 
-- Pas3rd (Pases al tercio ofensivo): también muy elevado.
+- *Pas3rd* (Pases al tercio ofensivo): también muy elevado.
 
-- Assists sin gol y SCA (Acciones que acaban en tiro): por encima del promedio.
+- *Assists sin gol* y *SCA* (Acciones que acaban en tiro): por encima del promedio.
 
-- FlD (Faltas recibidas) y AerWon (duelos aéreos ganados) : también por encima de la media.
+- *FlD* (Faltas recibidas) y *AerWon* (duelos aéreos ganados) : también por encima de la media.
 
-- TouAtt3rd y TouAttPen (toques en el tercio/área ofensiva): son ligeramente elevados.
+- *TouAtt3rd* y *TouAttPen* (toques en el tercio/área ofensiva): son ligeramente elevados.
 
-Por último, variables defensivas (Tkl, Int, Blocks) y de disciplina (tarjetas, penaltis), contienen valores bajos o normales.
+Por último, variables defensivas *(Tkl, Int, Blocks)* y de disciplina *(tarjetas, penaltis)*, contienen valores bajos o normales.
 
 Con todo esto podemos determinar el perfil del jugador:
 
-Aleksa Terzić aparece como un jugador con un comportamiento extremadamente ofensivo en términos de participación en el tercio final y generación de centros al área. Este perfil sugiere que, aunque puede estar clasificado como defensor (lateral), su función dentro del equipo es claramente ofensiva.
+*Aleksa Terzić* aparece como un jugador con un comportamiento extremadamente ofensivo en términos de participación en el tercio final y generación de centros al área. Este perfil sugiere que, aunque puede estar clasificado como defensor (lateral), su función dentro del equipo es claramente ofensiva.
 
 En resumen, un lateral con carácter ofensivo, le aporta mucho al ataque de su equipo.
 
-```{r }
+```{r posición_anomalo, include=FALSE}
 datos2[1619, c("Player", "Pos")]
 ```
 Confirmamos la posición de defensa (lateral), sin embargo, es posible que juegue como lateral ofensivo o directamente carrilero en un sistema de tres centrales.
@@ -921,7 +954,7 @@ for (i in 1:3) {
 }
 diag(cor(mypls@scoreMN, mypls@uMN))
 ```
-Las correlaciones obtenidas muestran que existe una relación lineal moderada entre los scores (t) y las variables u en las dos primeras componentes (correlaciones ≈ 0.61 y 0.59), mientras que en la tercera componente la relación es más débil (correlación ≈ 0.39). Esto indica que las dos primeras componentes capturan la mayor parte de la relación lineal entre las variables predictoras y la respuesta, mientras que la tercera componente aporta información adicional pero menos relevante.
+Las correlaciones obtenidas muestran que existe una relación lineal moderada entre los scores (t) y las variables u en las dos primeras componentes (correlaciones = 0.61 y 0.59), mientras que en la tercera componente la relación es más débil (correlación = 0.39). Esto indica que las dos primeras componentes capturan la mayor parte de la relación lineal entre las variables predictoras y la respuesta, mientras que la tercera componente aporta información adicional pero menos relevante.
 
 Además, se realiza un cálculo más detallado del R² y Q², tanto acumulado como por variable, para evaluar en profundidad la capacidad explicativa y predictiva del modelo PLS. Esto permite identificar qué variables contribuyen más a la explicación y predicción de la variable respuesta (goles), y cómo evoluciona la calidad del modelo al añadir componentes.
 
@@ -1073,8 +1106,8 @@ En el segundo gráfico, la contribución de los componentes al R² en la variabl
 Aunque ya se ha explorado parcialmente la interpretación del modelo durante la validación, en esta sección se profundiza en el análisis de los resultados obtenidos con el modelo PLS. Se examinan los scores y pesos de las componentes principales, así como los coeficientes de regresión, para identificar qué variables tienen mayor influencia en la predicción de los goles y cómo se distribuyen los jugadores en el espacio latente definido por el modelo. Esta interpretación permite comprender mejor la relación entre las estadísticas individuales y el rendimiento goleador, facilitando la extracción de conclusiones relevantes.
 
 ```{r}
-par(mfrow = c(1,2))
-plot(x =)
+#par(mfrow = c(1,2))
+#plot(x =)
 ```
 
 
@@ -1093,7 +1126,7 @@ plot(x =)
 
 
 *ANEXO 1*
-```{r carga, echo = FALSE}
+```{r anexo_1}
 # Mostrar las dimensiones del dataset
 dim(datos)
 
@@ -1106,7 +1139,7 @@ summary(datos)
 
 *ANEXO 2*
 
-```{r analisis_estadistico, echo=TRUE}
+```{r anexo_2}
 summary(datos[,descFut$variable[descFut$tipo == "numerical"]])
 mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
 myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
@@ -1115,7 +1148,7 @@ sort(myCV)
 ```
 
 *ANEXO 3*
-```{r }
+```{r anexo_3}
 # Excluir la variable "Min" de numerical_vars
 numerical_vars_without_min <- setdiff(numerical_vars, "Min")
 
@@ -1125,7 +1158,7 @@ boxplot(datos[, numerical_vars_without_min], las = 2, main = "Boxplot de Variabl
 ```
 *ANEXO 4*
 
-```{r}
+```{r anexo_4}
 # Excluir la variable "Min" de numerical_vars
 numerical_vars_without_min <- setdiff(numerical_vars, "Min")
 # Aplicar una transformación logarítmica a las variables numéricas
@@ -1137,7 +1170,7 @@ boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Var
 ```
 
 *ANEXO 5*
-```{r}
+```{r anexo_5}
 # Dividir las variables en grupos más pequeños para mejorar la legibilidad
 num_vars <- descFut$variable[descFut$tipo == "numerical"]
 
@@ -1164,13 +1197,54 @@ for (group_name in names(num_vars_groups)) {
 ```
 
 *ANEXO 6: Scree plot*
-```{r }
+```{r anexo_6}
 VPmedio = 100 * (1/nrow(eig.val))
 fviz_eig(res.pca, addlabels = TRUE) +
     geom_hline(yintercept=VPmedio, linetype=2, color="red")
+kable(eig.val[1:20,])
 ```
 
-*ANEXO 7: Gráficos de contribución de las variables a las primeras componentes*
+*ANEXO 7: Gráfico de scores de las componentes 3 y 4*
+```{r anexo_7}
+graf_scores_34
+```
+
+*ANEXO 8: T2 de Hotelling*
+```{r anexo_8}
+plot(1:length(miT2), miT2, type = "p", xlab = "Jugadores", ylab = "T2")
+abline(h = F95, col = "orange", lty = 2, lwd = 2)
+abline(h = F99, col = "red3", lty = 2, lwd = 2)
+```
+
+*ANEXO 9: Jugadores anómalos*
+```{r anexo_9}
+datos2[which(miT2 > F99), "Player"]
+```
+
+*ANEXO 10: Anómalo máximo*
+```{r anexo_10}
+# Selección y escalado de variables numéricas relevantes
+datosNumericos = datos2[,descFut$tipo == "numerical"]
+datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League", "valor_mercado"))]
+datosNumericos = scale(datosNumericos, center = TRUE, scale = TRUE)
+X = as.matrix(datosNumericos)
+# Calculamos los loadings a partir de las coordenadas de las variables
+# ya que la librería FactoMineR nos devuelve los loadings ponderados 
+# por la importancia de cada componente principal.
+misLoadings = sweep(res.pca$var$coord, 2, sqrt(res.pca$eig[1:K,1]), FUN="/")
+# Calculamos las contribuciones
+mycontrisT2 = contribT2(X = X, scores = misScores, loadings = misLoadings, 
+                        eigenval = eig.val[1:K,1], observ = which.max(miT2),
+                        cutoff = 2)
+
+par(mar = c(10,2.3,3,1))
+barplot(mycontrisT2[,1],las=2, cex.names = 0.5,
+        main= paste0("Observación: ", rownames(datos)[which.max(miT2)]))
+
+datos2[1619, c("Player", "Pos")]
+```
+
+*ANEXO 10: Gráficos de contribución de las variables a las primeras componentes*
 A continuación, se muestran cuatro gráficos de barras que indican cuánto contribuye cada variable a la construcción de las primeras cuatro componentes principales. Cuanto mayor es la barra, mayor es la influencia de esa variable en la componente correspondiente.
 ```{r}
 fviz_contrib(res.pca, choice = "var", axes = 1)
@@ -1180,7 +1254,7 @@ fviz_contrib(res.pca, choice = "var", axes = 4)
 ```
 Estos gráficos nos permiten interpretar el significado de cada dimensión: por ejemplo, en Dim1 predominan variables relacionadas con los pases y la actividad ofensiva y defensiva, mientras que en Dim2 tienen más peso las acciones en el tercio ofensivo como asistencias sin gol, centros o conducciones en zona de ataque. En Dim3 y Dim4 destacan variables defensivas como entradas y bloqueos, así como algunas estadísticas asociadas al valor de mercado —es decir, aquellas que en los gráficos de variables anteriores aparecían alineadas con la variable `valor_mercado`—, lo que refuerza la interpretación previa de que esas dimensiones capturan información más económica que posicional.
 
-*ANEXO 8: Biplots de las componentes principales*
+*ANEXO 9: Biplots de las componentes principales*
 ```{r}
 fviz_pca_biplot(res.pca, axes = c(1,2), labelsize = 3,
                 label = "var", repel = TRUE, 
