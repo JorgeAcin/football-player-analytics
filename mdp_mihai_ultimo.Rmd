@@ -868,9 +868,239 @@ En cuanto a las características que más influyen en la clasificación, se obse
 
 Por el contrario, los jugadores de valor bajo tienden a tener menor participación ofensiva y destacan menos en estadísticas de creación de juego o definición. En general, su perfil está más asociado a tareas defensivas o menos visibles, aunque estas tienen menos peso a la hora de determinar el valor de mercado.
 
-Finalmente, cuando se analiza la probabilidad con la que el modelo asigna una categoría a cada jugador, se ve que en la mayoría de los casos está muy seguro. Por ejemplo, hay jugadores para los que la probabilidad de estar en la categoría "Bajo" supera el 99 %, lo que demuestra que su perfil es muy claro. Solo en algunos pocos casos hay algo de duda entre dos clases, sobre todo entre las categorías "Bajo" y "Medio".
+Finalmente, cuando se analiza la probabilidad con la que el modelo asigna una categoría a cada jugador, se ve que en la mayoría de los casos está muy seguro. Por ejemplo, hay jugadores para los que la probabilidad de estar en la categoría "Bajo" supera el 99%, lo que demuestra que su perfil es muy claro. Solo en algunos pocos casos hay algo de duda entre dos clases, sobre todo entre las categorías "Bajo" y "Medio".
 
 En conjunto, todos estos resultados muestran que el modelo no solo es muy preciso, sino también coherente: reconoce correctamente a los jugadores según su rendimiento y logra diferenciar claramente a los de mayor valor de mercado, que suelen tener un perfil ofensivo más destacado.
+
+**PLS**
+
+*Análisis PLS para los goles*
+
+A continuación, se realizará un análisis de regresión PLS (Partial Least Squares) para modelar y los goles de los jugadores a partir de sus variables numéricas. El objetivo es identificar qué combinación de variables explica mejor la variabilidad en la cantidad de goles y evaluar la capacidad predictiva del modelo.
+
+*Estimación del modelo y optimización del número de componentes*
+
+Primero, seleccionamos las variables numéricas (menos los goles) como predictores (X) y los goles como variable respuesta (Y). Esto nos permitirá ajustar el modelo PLS para predecir el número de goles a partir de las estadísticas de los jugadores. Ajustamos el modelo PLS utilizando la función opls, que selecciona automáticamente el número óptimo de componentes mediante validación cruzada leave-one-out.
+
+```{r selComps}
+# Análisis PLS para los goles
+
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+#BiocManager::install("ropls")
+
+# Cargar librerías necesarias
+library(ropls)
+library(ggplot2)
+library(dplyr)
+library(viridis)
+library(gridExtra)
+
+# Selecciona las variables numéricas predictoras y la variable respuesta
+X <- datos[, setdiff(colnames(datos2), c("Goals", "Player", "Nation", "Pos", "Team", "League"))]
+Y <- datos$Goals
+
+# Ajusta el modelo PLS (por defecto, busca el número óptimo de componentes)
+mypls = opls(x = X, y = Y, predI = NA, crossvalI = 50, scaleC = "standard",
+             fig.pdfC = "none")
+```
+El modelo PLS ajustado para predecir los goles de los jugadores muestra un ajuste y capacidad predictiva adecuados: R2X(cum) = 0.442 indica que el modelo explica el 44.2% de la variabilidad de las variables predictoras, mientras que R2Y(cum) = 0.67 muestra que el 67% de la variabilidad en el número de goles es explicada por el modelo. El valor Q2(cum) = 0.647 refleja una buena capacidad predictiva mediante validación cruzada y RMSEE = 1.33 indica un error de predicción moderado. El modelo utiliza 4 componentes latentes (pre = 4) y los valores ort, pR2Y y pQ2 (0, 0.05, 0.05) sugieren ausencia de sobreajuste y buena robustez. En resumen, el modelo PLS explica de forma razonable el número de goles a partir de las estadísticas de los jugadores, mostrando un equilibrio entre ajuste e interpretabilidad. De cualquier manera, vamos a generar nuestro propio gráfico para estimar mejor el número óptimo de componentes del modelo.
+
+```{r plotNC}
+maxNC = 10
+myplsC = opls(x = X, y = Y, predI = maxNC, crossvalI = 50, 
+              scaleC = "standard", fig.pdfC = "none")
+plot(1:maxNC, myplsC@modelDF$`R2Y(cum)`, type = "o", pch = 16, col = "blue3",
+     lwd = 2, xlab = "Components", ylab = "", ylim = c(0,1),
+     main = "Modelo PLS: Jugadores")
+lines(1:maxNC, myplsC@modelDF$`Q2(cum)`, type = "o", pch = 16, col = "red3",
+      lwd = 2)
+abline(h = 0.5, col = "red3", lty = 2)
+legend("bottomleft", c("R2Y", "Q2"), lwd = 2, 
+       col = c("blue3", "red3"), bty = "n")
+```
+El gráfico muestra cómo los valores de R2Y (ajuste del modelo) y Q2 (capacidad predictiva) aumentan rápidamente hasta la tercera componente y luego se estabilizan, superando ampliamente el umbral de 0.5. Esto indica que, a partir de la tercera componente, añadir más componentes no mejora significativamente el modelo.
+
+Por todo esto, nos quedamos únicamente con las tres primeras componentes principales, volvemos a generar el modelo pero esta vez con 3.
+
+```{r selComps2}
+A <- 3
+mypls = opls(x = X, y = Y, predI = A, crossvalI = 50, scaleC = "standard")
+```
+En conclusión, aunque el modelo con cuatro componentes presenta un ajuste ligeramente superior (R2Y = 0.670, Q2 = 0.647, RMSEE = 1.33), la versión con tres componentes ofrece un rendimiento muy similar (R2Y = 0.658, Q2 = 0.642, RMSEE = 1.35), con la ventaja de ser más simple e interpretable. La pérdida de capacidad explicativa y predictiva es mínima, mientras que se gana en parsimonia y estabilidad. Por tanto, el modelo PLS con tres componentes se considera más adecuado  ya que mantiene un buen equilibrio entre rendimiento y simplicidad.
+
+**Validación del modelo**
+
+*Validación del modelo PLS*
+
+La validación del modelo es un proceso fundamental para evaluar la capacidad predictiva y la robustez del modelo ajustado. Consiste en comprobar que el modelo no solo se ajusta bien a los datos de entrenamiento, sino que también generaliza correctamente a nuevos datos. En este caso, la validación se realiza principalmente mediante la evaluación de los valores de R² y Q², así como la interpretación gráfica de los scores y las relaciones entre componentes. No se realizará una detección adicional de valores atípicos o anómalos en esta etapa, ya que dicho análisis ya fue llevado a cabo previamente durante el preprocesamiento con el PCA, donde se identificaron y trataron las observaciones anómalas.
+
+Empezaremos analizando la relación lineal entre los scores (t) y las variables u para cada componente.
+
+```{r tu}
+par(mfrow = c(1,3))
+for (i in 1:3) {
+  plot(mypls@scoreMN[,i], mypls@uMN[,i], xlab = "t", ylab = "u",
+     main = paste0("Component ", i), col = "red3")
+}
+diag(cor(mypls@scoreMN, mypls@uMN))
+```
+Las correlaciones obtenidas muestran que existe una relación lineal moderada entre los scores (t) y las variables u en las dos primeras componentes (correlaciones ≈ 0.61 y 0.59), mientras que en la tercera componente la relación es más débil (correlación ≈ 0.39). Esto indica que las dos primeras componentes capturan la mayor parte de la relación lineal entre las variables predictoras y la respuesta, mientras que la tercera componente aporta información adicional pero menos relevante.
+
+Además, se realiza un cálculo más detallado del R² y Q², tanto acumulado como por variable, para evaluar en profundidad la capacidad explicativa y predictiva del modelo PLS. Esto permite identificar qué variables contribuyen más a la explicación y predicción de la variable respuesta (goles), y cómo evoluciona la calidad del modelo al añadir componentes.
+
+Para ello, se utiliza la función R2, que calcula el R² por variable y total, y se aplica sobre las matrices de predicción de X y Y generadas por el modelo PLS. Asimismo, se calcula Q² mediante validación cruzada, obteniendo así una visión más granular del rendimiento del modelo para cada variable y componente.
+
+Los resultados se visualizan mediante gráficos de barras apiladas, mostrando la contribución de cada componente al R² por variable, y permitiendo identificar las variables más relevantes en la explicación de la respuesta.
+
+```{r R2}
+R2 <- function(Y, myYpred){
+  SCT_k <- apply(scale(Y), 2, function(i)sum(i^2))
+  SCE_k <- apply(myYpred, 2, function(i) sum(i^2))
+  
+  # By variable
+  R2_k <- SCE_k/SCT_k
+  
+  # Total R2
+  R2 <- sum(SCE_k)/sum(SCT_k)
+  
+  list(R2_kcum = R2_k,
+       R2cum   = R2)
+
+}
+
+myT = mypls@scoreMN
+myP = mypls@loadingMN
+myXpred = myT%*%t(myP)
+R2X <- R2(X, myXpred)
+R2X
+
+myC <- mypls@cMN
+myYpred = myT%*%t(myC)
+R2Y <- R2(Y = Y, myYpred = myYpred)
+R2Y
+
+PLS_R2 <- function(A, X, Y){
+  
+  mypls = opls(x = X, y = Y, 
+             predI = A, 
+             crossvalI = 50, 
+             scaleC = "standard",
+             fig.pdfC = "none")
+  ### R2 for X space ####
+  myT = mypls@scoreMN
+  myP = mypls@loadingMN
+  myXpred = myT%*%t(myP)
+  R2X <- R2(X, myXpred)
+  
+  ### R2 for Y space ####
+  myC <- mypls@cMN
+  myYpred = myT%*%t(myC)
+  R2Y <- R2(Y = Y, myYpred = myYpred)
+  R2Y
+  
+  results <- list(R2X, R2Y)
+  names(results) <- c("EspacioX", "EspacioY")
+  results
+}
+
+result_all <- lapply(c(1:A), PLS_R2, X, Y)
+
+names(result_all) <- paste0( "comp", 1:A)
+
+
+# Hasta aquí, R2 acumulados. Calculemos por componente
+num_components <- length(result_all)  # Ajusta esto según la estructura de tu objeto
+# Inicializar listas para almacenar R2 incrementales para cada componente y para cada variable dentro de los componentes
+R2kX <- R2kY <- vector("list", num_components )
+R2X <- R2Y <- numeric(num_components)
+
+R2kX[[1]] <- result_all[[1]]$EspacioX$R2_kcum
+R2kY[[1]] <- result_all[[1]]$EspacioY$R2_kcum
+R2X[1] <- result_all[[1]]$EspacioX$R2cum
+R2Y[1] <- result_all[[1]]$EspacioY$R2cum
+
+
+# Calcular R2 incrementales para cada componente y para cada variable dentro de los componentes
+for (k in 2:num_components) {
+  # Calcula la diferencia entre los vectores de R2 acumulativos de componentes consecutivos para cada variable
+  R2kX[[k]] <- result_all[[k]]$EspacioX$R2_kcum - result_all[[k - 1]]$EspacioX$R2_kcum
+  R2kY[[k]] <- result_all[[k]]$EspacioY$R2_kcum - result_all[[k - 1]]$EspacioY$R2_kcum
+
+  R2X[k] <- result_all[[k]]$EspacioX$R2cum - result_all[[k - 1]]$EspacioX$R2cum
+  R2Y[k] <- result_all[[k]]$EspacioY$R2cum - result_all[[k - 1]]$EspacioY$R2cum
+}
+
+
+names(R2kX) <- paste0("comp", 1:A)
+names(R2kY) <- paste0("comp", 1:A)
+
+# Convertir la lista en un dataframe para ggplot R2kX
+df_R2kX <- do.call(rbind, lapply(seq_along(R2kX), function(i) {
+  data.frame(Componente = names(R2kX)[i],  # Usar los nombres de la lista como nombres de componentes
+             Variable = names(R2kX[[i]]),
+             Rk2 = as.numeric(R2kX[[i]]),
+             stringsAsFactors = FALSE)
+})) %>%
+  mutate(Componente = factor(Componente)) %>%
+  arrange(Variable, Componente)
+
+# Convertir la lista en un dataframe para ggplot R2kY
+df_R2kY <- do.call(rbind, lapply(seq_along(R2kY), function(i) {
+  data.frame(Componente = names(R2kY)[i],  # Usar los nombres de la lista como nombres de componentes
+             Variable = names(R2kY[[i]]),
+             Rk2 = as.numeric(R2kY[[i]]),
+             stringsAsFactors = FALSE)
+})) %>%
+  mutate(Componente = factor(Componente)) %>%
+  arrange(Variable, Componente)
+
+# Gráfico de barras apiladas con ggplot2
+# Seleccionar las 10 variables con mayor contribución total al R^2 en X
+top10_vars <- df_R2kX %>%
+    group_by(Variable) %>%
+    summarise(total_R2 = sum(Rk2, na.rm = TRUE)) %>%
+    arrange(desc(total_R2)) %>%
+    slice(1:10) %>%
+    pull(Variable)
+
+df_R2kX_top10 <- df_R2kX %>% filter(Variable %in% top10_vars)
+
+p1 <- ggplot(df_R2kX_top10, aes(x = Variable, y = Rk2, fill = Componente)) +
+    geom_bar(stat = "identity", position = "stack") +
+    scale_fill_viridis_d() +  # Usar paleta viridis discreta
+    labs(title = "Top 10 Variables: Contribución de Componentes al R^2 en X",
+             x = "Variable", y = "R^2",
+             fill = "Componente") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+p2 <- ggplot(df_R2kY, aes(x = Variable, y = Rk2, fill = Componente)) +
+  geom_bar(stat = "identity", position = "stack") +
+    scale_fill_viridis_d() +  # Usar paleta viridis discreta
+  labs(title = "Contribución de Componentes al R^2 por Variable en Y",
+       x = "Variable", y = "R^2",
+       fill = "Componente") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+
+gridExtra::grid.arrange(p1, p2)  
+```
+En el primer gráfico, observamos que las variables que más contribuyen al R² en el espacio X (predictoras) son principalmente aquellas relacionadas con el rendimiento ofensivo y la participación en el juego, como los tiros, asistencias y pases clave. Estas variables son explicadas en mayor medida por la primera componente, aunque la segunda y tercera también aportan información relevante en algunos casos. Esto indica que el modelo PLS identifica patrones complejos en el rendimiento de los jugadores, donde varias dimensiones estadísticas contribuyen de forma conjunta a explicar la variabilidad.
+
+Además, se aprecia que ciertas variables, como por ejemplo las relacionadas con la defensa o el juego aéreo, presentan una mayor contribución explicada por la segunda o tercera componente en lugar de la primera. Esto sugiere que estas variables capturan aspectos del rendimiento que no están directamente asociados con la dimensión principal del modelo, sino que requieren componentes adicionales para ser explicadas adecuadamente. Así, el modelo PLS permite descomponer la variabilidad en diferentes ejes latentes, facilitando la interpretación de cómo distintos grupos de variables se asocian a diferentes patrones de juego.
+
+En el segundo gráfico, la contribución de los componentes al R² en la variable respuesta (goles) muestra que la mayor parte de la variabilidad explicada se concentra en la primera componente, con aportes adicionales de la segunda y tercera. Esto sugiere que la relación entre las estadísticas individuales y el número de goles puede ser capturada de manera eficiente con pocas componentes latentes.
+
+**Interpretación del modelo PLS**
+
+Aunque ya se ha explorado parcialmente la interpretación del modelo durante la validación, en esta sección se profundiza en el análisis de los resultados obtenidos con el modelo PLS. Se examinan los scores y pesos de las componentes principales, así como los coeficientes de regresión, para identificar qué variables tienen mayor influencia en la predicción de los goles y cómo se distribuyen los jugadores en el espacio latente definido por el modelo. Esta interpretación permite comprender mejor la relación entre las estadísticas individuales y el rendimiento goleador, facilitando la extracción de conclusiones relevantes.
+
+```{r}
+par(mfrow = c(1,2))
+plot(x =)
+```
+
 
 
 
