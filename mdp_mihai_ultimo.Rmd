@@ -287,12 +287,15 @@ fviz_pca_biplot(res.pca, axes = c(3,4), labelsize = 3,
 ```
 
 
+**VALIDACIÓN DEL MODELO PCA**
 
+Después de haber sacado las conclusiones pertinentes al realizar el Análisis de Componentes Principales, procederemos a la validación del modelo PCA,y comprobar si todo lo que hemos realizado no ha estado condicionado por ningún anómalo que ha alterado nuestros resultados y conclusiones.
 
+Primeramente realizaremos la detección de anómalos con T2-Hotelling
 
-Validación del modelo PCA
+El estadístico nos permite identificar valores anómalos extremos, que podrían estar condicionando el modelo, es decir, la creación de las PCs. Este estadístico se calcula a partir de los scores. Por ello, visualizaremos también los gráficos de scores para las PCs seleccionadas, además del gráfico con los valores del T2 tomando las 3 Ps e incluyendo los límites de confianza al 95% y 99%, en naranja y rojo, respectivamente.
 
-Detección de anómalos con T2-Hotelling
+Estamos identificando jugadores que se comportan de forma inusual en el espacio de las primeras K componentes principales. Aquellos que tengan un valor de T² superior al umbral del 95% o 99% podrían ser considerados atípicos. Esto es útil para análisis de calidad, detección de errores o exploración de perfiles futbolísticos únicos dentro de nuestro Dataset.
 
 ```{r }
 misScores = res.pca$ind$coord[,1:K]
@@ -305,30 +308,47 @@ plot(1:length(miT2), miT2, type = "p", xlab = "Jugadores", ylab = "T2")
 abline(h = F95, col = "orange", lty = 2, lwd = 2)
 abline(h = F99, col = "red3", lty = 2, lwd = 2)
 ```
-Anomalos
-```{r}
-anomalas = which(miT2 > F99)
-anomalas
-datos[41, ] # cogemos un anómalo por curiosidad, para ver que jugador es
-```
+La mayoría de los futbolistas tienen valores de T² entre 0 y 10, por lo que están dentro de la normalidad.
 
+Un grupo pequeño de jugadores superan el umbral y cuentan con una T² > F95, algunos incluso > F99.
+
+Vamos a descubrir quienes son estos jugadores anómalos:
+```{r}
+# Jugadores con T2 superior al umbral del 99%
+which(miT2 > F99)
+
+# vemos los nombres de los jugadores con T2 superior al umbral del 99%
+datos2[which(miT2 > F99), "Player"]
+```
+Solamente 28 jugadores superan el umbral del 99%. No obstante, si leemos atentamente los nombres podemos encontrar jugadores de talla mundial como Kevin de Bruyne, Toni Kroos o Kylian Mbappé. Por otra parte también encontramos jóvenes promesas el francés Rayan Cherki. 
+Algo que en principio no debería de alarmarnos, ya que son excelsos futbolistas que destacan fuertemente sobre los demás gracias a su juego.
+
+
+Vamos a generar dos gráficos PCA en paralelo, con los jugadores coloreados según si son atípicos multivariantes fuertes (es decir, si su estadístico Hotelling T² supera el umbral del 99%).
 ```{r }
 p1 = fviz_pca_ind(res.pca, axes = c(1,2), geom = c("point"),
-                  habillage = factor(miT2 > F95))
+                  habillage = factor(miT2 > F99))
 
 p2 = fviz_pca_ind(res.pca, axes = c(3,4), geom = c("point"), 
-                  habillage = factor(miT2 > F95)) 
+                  habillage = factor(miT2 > F99)) 
 
 grid.arrange(p1,p2, nrow = 1)
 ```
+Los futbolistas atípicos se encuentran principalmente alejados del centro de la nube de puntos en las primeras 2 dimensiones, especialmente en dirección positiva de la segunda dimensión (arriba).En el plano de las dimensiones 3 y 4, los "outliers" también tienden a dispersarse lejos del centro, aunque de forma más equilibrada y colándose un individuo en el centro.
 
-```{r}
-p3 = fviz_pca_ind(res.pca, axes = c(1,3), geom = c("point"), 
-                  habillage = factor(miT2 > F95)) 
+Esto indica que las diferencias anómalas de estos jugadores se explican principalmente por las dos primeras dimensiones (que concentran ~40% de la varianza total).
 
-grid.arrange(p3, nrow = 1)
-```
 
+Los jugadores marcados como "TRUE" son casos potencialmente interesantes por su comportamiento extremo en múltiples combinaciones de variables. Esto puede utilizarse para:
+
+-> Detectar perfiles únicos (p. ej., talentos o rendimientos extremos).
+
+-> Considerarlos como casos atípicos que influyen en los modelos.
+
+No obstante, mantendremos en el modelo a dichos jugadores porque, dado que estamos estudiando las estadísticas de los futbolistas de las 5 grandes ligas, es lógico que los jugadores con alto rendimiento estén contribuyendo mucho al modelo y no deberíamos excluirlos ya que pueden ayudarnos a entender ,por ejemplo, el valor de mercado, como veremos más adelante.
+
+
+Por otra parte, podemos emplear el gráfico de contribuciones a la T2 de Hotelling para entender qué variables contribuyen más a que esa observación haya resultado anómala.
 
 ```{r }
 contribT2 = function (X, scores, loadings, eigenval, observ, cutoff = 2) {
@@ -365,36 +385,50 @@ mycontrisT2 = contribT2(X = X, scores = misScores, loadings = misLoadings,
 
 ```
 
-El anómalo máximo, apreciamos que es el 756 -> Haaland
+El anómalo máximo, apreciamos que es el 1619 -> Aleksa Terzić
 
-
+Realicemos un gráfico de barras del jugador más anómalo del conjunto de datos según el estadístico Hotelling T²:
 ```{r }
 par(mar = c(10,2.3,3,1))
-barplot(mycontrisT2[,1],las=2, #cex.names = 0.5,
+barplot(mycontrisT2[,1],las=2, cex.names = 0.5,
         main= paste0("Observación: ", rownames(datos)[which.max(miT2)]))
 ```
+Teniendo ya representado el gráfico podemos sacar diversas conclusiones:
+
+La estadístoca de CrsPA (Centros al área rival completados por partido) es extremadamente alta en comparación con el resto. Está por encima de 12 unidades estandarizadas. Este es el factor principal que explica su carácter atípico.
+
+Otras variables destacadas:
+
+- PPA (Pases al área rival): tiene un valor alto.
+
+- Pas3rd (Pases al tercio ofensivo): también muy elevado.
+
+- Assists sin gol y SCA (Acciones que acaban en tiro): por encima del promedio.
+
+- FlD (Faltas recibidas) y AerWon (duelos aéreos ganados) : también por encima de la media.
+
+- TouAtt3rd y TouAttPen (toques en el tercio/área ofensiva): son ligeramente elevados.
+
+Por último, variables defensivas (Tkl, Int, Blocks) y de disciplina (tarjetas, penaltis), contienen valores bajos o normales.
+
+Con todo esto podemos determinar el perfil del jugador:
+
+Aleksa Terzić aparece como un jugador con un comportamiento extremadamente ofensivo en términos de participación en el tercio final y generación de centros al área. Este perfil sugiere que, aunque puede estar clasificado como defensor (lateral), su función dentro del equipo es claramente ofensiva.
+
+En resumen, un lateral con carácter ofensivo, le aporta mucho al ataque de su equipo.
 
 ```{r }
-par(mar = c(12, 4, 3, 1))  # Aumentar el margen inferior y el izquierdo para las etiquetas
-
-# Seleccionar las 10 contribuciones más altas
-top10_contribs <- sort(mycontrisT2[,1], decreasing = TRUE)[1:10]
-
-# Crear el gráfico de barras con las 10 mayores contribuciones
-barplot(top10_contribs, 
-        las = 2,           # Rotar las etiquetas del eje x
-        cex.names = 0.8,   # Reducir el tamaño de las etiquetas
-        col = "steelblue", # Cambiar el color de las barras
-        main = paste0("Top 10 Contribuciones - Observación: ", rownames(datos2)[which.max(miT2)]),
-        ylab = "Contribución",  # Etiqueta del eje y
-        border = "white")  # Eliminar bordes de las barras
+datos2[1619, c("Player", "Pos")]
 ```
+Confirmamos la posición de defensa (lateral), sin embargo, es posible que juegue como lateral ofensivo o directamente carrilero en un sistema de tres centrales.
 
-```{r }
-datos[756,]
-```
 
-Distancia al modelo (SCR)
+
+**Distancia al modelo (SCR)**
+
+Ahora estudiaremos la distancia al modelo PCA mediante la Suma de Cuadrados Residual (SCR), que nos ayudará a detectar los valores anómalos moderados, es decir, aquellos futbolistas que no están bien explicados por el modelo PCA. Recordemos que los anómalos severos son aquellos detectados con el gráfico T2 de Hotelling pero que presentan una baja SCR.
+
+Para ello, primero calcularemos la matriz de residuos y, a partir de ella, la SCR.
 
 ```{r }
 myE = X - misScores %*% t(misLoadings) 
@@ -422,6 +456,33 @@ chi2lim99 = g * qchisq(0.99, df = h)
 abline(h = chi2lim, col = "orange", lty = 2, lwd = 2)  # Línea para el 95%
 abline(h = chi2lim99, col = "red3", lty = 2, lwd = 2)  # Línea para el 99%
 ```
+El valor SCR mide qué tan bien se ajusta cada jugador al modelo PCA. Cuanto más alto es el SCR, peor representado está por las componentes seleccionadas.
+
+Los picos altos indican jugadores que no están representados correctamente por las primeras componentes principales.Esto  sugiere que tienen patrones únicos o raros que no son capturados por las dimensiones más relevantes del PCA.
+
+A diferencia de la T de Hotelling, no encontramos tantos futbolistas que superen el umbral del 99%, no obstante, hay bastantes que pasan por encima del 95%.
+
+Vamos a descubrir los 10 jugadores que mayor valor de SCR tengan: 
+
+```{r}
+SCR <- res.pca$ind$dist
+
+# Ordenar los valores de SCR de mayor a menor
+indices_top_scr <- order(SCR, decreasing = TRUE)
+
+# Mostrar los 10 jugadores con SCR más altos
+top10_scr <- head(indices_top_scr, 10)
+
+# Ver sus nombres y posiciones
+datos2[top10_scr, c("Player", "Pos")]
+```
+
+
+Nos repetimos como con la T de Hotelling, no vamos a excluir estas variables del estudio, simplemente son jugadores que destacan mucho por sus estadísticas, no tienen datos incorrectos o que no sean reales.
+
+Vamos a ver cómo averiguar qué características tienen estos futbolistas que los hacen diferentes a las tendencias generales resumidas por el modelo PCA. Para ello, vamos a crear una función que calcule las contribuciones de cada variable a la SCR de una observación concreta. 
+
+Como ejemplo, generaremos el gráfico de contribuciones para Rayan Cherki, una joven promesa del fútbol frances, que aparece en la lista de los SCR más elevados:
 
 ```{r }
 ContriSCR = function(E, SCR) {
@@ -440,20 +501,48 @@ ContriSCR = function(E, SCR) {
 ## Calculamos las contribuciones de todas las observaciones
 mycontris = ContriSCR(E = myE, SCR = mySCR)
 ## Gráfico para Special_K
-barplot(mycontris[756,],las=2, cex.names = 0.7,
-        main=c('Contribuciones a SCR para Haaland'))
+barplot(mycontris[332,],las=2, cex.names = 0.5, # ponemos la letra tan pequeña porque sino es imposible sacar conclusines
+        main=c('Contribuciones a SCR para Cherki'))
 ```
+A partir del gráfico de contribuciones al SCR podemos sacar diversas conclusiones:
+
+Las variables que MÁS contribuyen POSITIVAMENTE, estas son las que causan atipicidad:
+
+- ScaDrib (regates exitosos que acaban en tiro), es claramente la variable dominante.
+
+Este jovencísimo francés se distingue por realizar numerosos regates que generan tiros, lo que lo aleja del comportamiento promedio. Este es el factor principal de su carácter atípico.
+
+También le ayudan a caracterizarse: 
+
+- BlkSh (tiros bloqueados por partido) y Clr (despejes por partido), sugieren que tiene también un papel activo en acciones defensivas, poco común en perfiles ofensivos.
+
+- Assists no goal (asistencias que acaban en tiro, aunque no en gol), estadística que refuerza aún más su rol de creador de ocasiones, incluso más allá de las asistencias directas.
+
+Por otra parte tenemos las variables con contribución NEGATIVA (representadas bien en el modelo):
+Estas variables ayudan a reducir su SCR, es decir, no contribuyen a su anormalidad. Tienen valores coherentes con el patrón general del conjunto:
+
+- Age: es joven, pero no excepcional en comparación con otros.
+
+- Min (minutos jugados) negativo: puede que no haya jugado muchos, como muchos jóvenes.
+
+- Goals: valor típico, marca goles pero no destaca por ello.
+
+- Pas3rd (pases al tercio ofensivo): comportamiento estándar.
+
+
+Todo esto consolida a Cherki como un jugador híbrido, creativo y participativo en defensa, lo que explica que el modelo PCA no logre captarlo bien en pocas dimensiones.
+
+
+-> Conclusión sobre la validación del modelo PCA
+
+Los resultados muestran que el modelo capta adecuadamente la estructura general de los datos, y que la mayoría de los jugadores se encuentran bien representados en el espacio reducido de componentes principales.
+
+Los casos que presentan valores atípicos en T² o SCR no corresponden a errores o problemas de modelado, sino que reflejan perfiles de jugadores extraordinarios, ya sea por un estilo de juego particularmente ofensivo, defensivo o híbrido, o bien por métricas singulares que los hacen sobresalir del patrón común. Es decir, se trata de futbolistas que simplemente se salen de la norma y, por tanto, aportan valor al análisis como ejemplos de diversidad en el rendimiento.
 
 
 
 
 
-
-
-(Hacer aquí la tabla de scores (y biplot si hace falta) para acabar con el PCA)
-```{r}
-
-```
 
 
 
@@ -465,6 +554,7 @@ JUSTIFICARLO Y EXPLICAR DETENIDAMENTE
 
 
 
+**Clustering**
 
 Ahora pasaremos a realizar el clustering.
 
@@ -619,5 +709,3 @@ summary(validacion)
 ```{r}
 
 ```
-
-
