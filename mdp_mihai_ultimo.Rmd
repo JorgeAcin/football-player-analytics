@@ -626,8 +626,6 @@ Los casos que presentan valores atípicos en T² o SCR no corresponden a errores
 Aplicar un Análisis Factorial de Correspondencias (AFC) en este proyecto no sería una decisión adecuada, ya que esta técnica no se ajusta al tipo de datos ni a los objetivos planteados en el estudio. El AFC está diseñado específicamente para explorar relaciones entre variables categóricas, es decir, variables que representan grupos o etiquetas como la nacionalidad, la liga o la posición del jugador. En este trabajo, sin embargo, el análisis gira en torno a un conjunto amplio de variables numéricas que reflejan directamente el rendimiento de los futbolistas durante la temporada, como goles, minutos jugados, asistencias, disparos, entradas o regates.
 El AFC, al centrarse únicamente en variables cualitativas, no permite analizar adecuadamente este tipo de información, por lo que su uso no contribuiría a alcanzar ninguno de los objetivos del proyecto. Además, aunque el conjunto de datos incluye algunas variables categóricas, estas no son el eje central del análisis, sino que actúan más bien como contexto o referencia. Por tanto, aplicar un AFC desviaría el enfoque metodológico y no aportaría resultados útiles ni relevantes dentro de la lógica del trabajo.
 
-
-
 **Clustering**
 
 Ahora pasaremos a realizar el clustering.
@@ -637,27 +635,23 @@ Para ello, utilizaremos en el análisis de clustering únicamente las variables 
 
 Dado que cada variable está medida en diferentes escalas y unidades (por ejemplo, goles, tiros, pases, etc.), usaremos los datos que ya tenemos centrados y escalados de la parte del PCA. Esto es esencial para evitar que las variables de mayor magnitud dominen la estructura de agrupación y asegurar que todas contribuyen de forma equilibrada al proceso de clustering.
 
-```{r}
+Se utilizará la distancia euclídea como medida de distancia, ya que nos interesa agrupar futbolistas con valores similares en sus estadísticas de rendimiento y atributos técnicos. Al estar los datos centrados y escalados, la distancia euclídea permite que todas las variables aporten de forma equilibrada.
+
+```{r Clustering Matriz de Distancias}
 # cogemos K = 16, para explicar un 80% de la variabilidad y además no tener variables incorreladas
 K = 16
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
 coords_pca_fut <- res.pca$ind$coord[, 1:K]
 
-
 midist_euclidea <- get_dist(coords_pca_fut, stand = FALSE, method = "euclidean")
-#fviz_dist(midist_euclidea, show_labels = TRUE, lab_size = 0.3,
-          # gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+fviz_dist(midist_euclidea, show_labels = TRUE, lab_size = 0.3,
+           gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
 ```
 
-```{r}
-midist_manh <- get_dist(coords_pca_fut, stand = FALSE, method = "manhattan")
-#fviz_dist(midist_manh, show_labels = TRUE, lab_size = 0.3,
-#         gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
-```
+En la matriz de distancias euclídeas calculada sobre los componentes principales, observamos zonas diferenciadas con bloques de colores más claros y oscuros. Esto indica que existen grupos de futbolistas que presentan similitudes entre sí en cuanto a sus características y desempeño (representados por las zonas azul claro, de baja distancia), y otros grupos que son notablemente diferentes (zonas anaranjadas, de alta distancia).
+La presencia de estos bloques sugiere que en la muestra existen patrones y agrupamientos naturales, lo que justifica la aplicación de técnicas de clustering para identificar perfiles o tipos de jugadores dentro del conjunto analizado. 
 
-
-
-```{r}
+```{r ANEXO Clustering Hopkins, include=FALSE}
 set.seed(69)
 
 myN = c(20, 35)  
@@ -671,47 +665,47 @@ for (i in myN) {
 }
 summary(myhopkins)
 ```
-El estadístico de Hopkins nos confirma una cierta tendencia de agrupamiento, puesto que ha sido calculado para diferentes valores de m (n en la función) y con diferentes semillas aleatorias y sus valores oscilan entre 0.84 y 0.86, es decir, están cercanos a 1.
+
+El estadístico de Hopkins nos confirma una cierta tendencia de agrupamiento, puesto que ha sido calculado para diferentes valores de m (n en la función) y con diferentes semillas aleatorias y sus valores oscilan entre 0.79 y 0.81, es decir, están cercanos a 1. (*ANEXO 13*)
+
+*MODELOS JERÁRQUICOS*
+
+_MÉTODO DE WARD_
+
+En primer lugar, aplicaremos modelos jerárquicos, utilizando el método de Ward y el método de la media. Empezaremos por estimar el número óptimo de clusters:
 
 
-```{r}
+```{r Clustering WARD}
 library(grid)
 library(gridExtra)
 p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
                   hc_method = "ward.D2", k.max = 10, verbose = FALSE, 
-                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
+                  hc_metric = "euclidean") + labs(title = "Num. óptimo clusters Ward")
 p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "wss", 
                   hc_method = "ward.D2", k.max = 10, verbose = FALSE, 
-                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
+                  hc_metric = "euclidean") + labs(title = "Num. óptimo clusters Ward")
 grid.arrange(p1, p2, nrow = 1)
 ```
 
-```{r}
+Aunque los métodos sugieren 2 clusters como óptimo, consideramos que este número es insuficiente para captar la diversidad de perfiles futbolísticos presentes en los datos. Observando los gráficos, optar por 3 o 4 clusters resulta un compromiso adecuado entre calidad estadística y riqueza interpretativa, ya que el índice de silueta y la reducción de la WSS siguen siendo razonables, permitiendo además extraer conclusiones más detalladas sobre los diferentes tipos de jugadores. Generamos, pues, los 4 clusters.
+
+```{r Clustering WARD Clusters}
 clust1 <- hclust(midist_euclidea, method="ward.D2")
 grupos1 <- cutree(clust1, k=4)
 table(grupos1)
 ```
 
-No realizamos el dendograma, debido a que contamos con demasiados jugadores, no llega a aportar ni información y sería excesivamente complicado interpretarlo visualmente
+No realizamos el dendograma, debido a que contamos con demasiados jugadores, no llega a aportar ni información y sería excesivamente complicado interpretarlo visualmente.
 
+El método de la media lo descartamos ya que a mayoría de jugadores han sido agrupados en un solo cluster.(*Anexo 14*)
 
-```{r}
-p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
-                  hc_method = "average", k.max = 10, verbose = FALSE, 
-                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
-p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "wss", 
-                  hc_method = "average", k.max = 10, verbose = FALSE, 
-                  hc_metric = "euclidean") + labs(title = "Num. optimo clusters")
-grid.arrange(p1, p2, nrow = 1)
-```
+*MÉTODOS DE PARTICIÓN*
 
-```{r}
-clust2 <- hclust(midist_euclidea, method="average")
-grupos2 = cutree(clust2, k = 3)
-table(grupos2)
-```
+_K-MEDIAS_
 
-```{r}
+En primer lugar, aplicaremos el algoritmo de k-medias y determinaremos el número óptimo de clusters para este algoritmo.
+
+```{r Clustering K-Medias}
 p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = kmeans, method = "silhouette", 
              k.max = 10, verbose = FALSE) +
   labs(title = "K-means")
@@ -721,66 +715,231 @@ p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = kmeans, method = "wss",
 grid.arrange(p1, p2, nrow = 1)
 ```
 
+Aunque estadísticamente el número óptimo de clusters según Silhouette es 2, la reducción significativa de la WSS hasta 3 o 4 clusters y la aceptable calidad de la agrupación sugieren que elegir 3 o 4 clusters es una opción razonable si buscamos un mayor nivel de segmentación e interpretabilidad en los perfiles de futbolistas. Por tanto, optar por 3 o 4 clusters nos ofrece un buen compromiso entre calidad estadística y riqueza descriptiva del análisis. Tambíen utilizamos otra alternativa con la librería NbClust.(*ANEXO 15*)
 
+Generamos, pues, los 3 clusters.
 
-
-
-
-```{r}
-library(NbClust)
-library(clValid)
-res.nbclust <- NbClust(data = coords_pca_fut, diss =midist_euclidea , distance = NULL, 
-                        min.nc = 2, max.nc = 6, 
-                        method = "kmeans", index ="all") 
-```
-
-```{r}
+```{r Clustering K-medias Clusters}
 set.seed(100)
 clust3 <- kmeans(coords_pca_fut, centers = 3, nstart = 20)
 table(clust3$cluster)
 ```
 
+_K-MEDOIDES_
 
+Probaremos como última opción el método de los k-medoides que debería ser más robusto frente a los valores atípicos. Determinaremos, en primer lugar, el número óptimo de clusters.
 
-
-
-```{r}
+```{r Clustering K-Medoides}
 p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = pam, method = "silhouette", 
              k.max = 10, verbose = FALSE) +
-  labs(title = "Numero optimo de clusters")
+  labs(title = "Numero óptimo de clusters")
 p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = pam, method = "wss", 
              k.max = 10, verbose = FALSE) +
-  labs(title = "Numero optimo de clusters")
+  labs(title = "Numero óptimo de clusters")
 grid.arrange(p1, p2, nrow = 1)
 ```
-```{r}
+```{r Clustering K-medias Clusters}
+set.seed(100)
+clust3 <- kmeans(coords_pca_fut, centers = 3, nstart = 20)
+table(clust3$cluster)
+```
+
+Aunque el criterio estadístico óptimo es 2 clusters según ambos métodos, como buscamos mayor segmentación e interpretabilidad (para diferenciar más perfiles futbolísticos), 4 o 5 clusters siguen siendo opciones razonables, ya que no hay una caída brusca en la calidad y el descenso de la silueta es progresivo.
+Así, con k-medoides, la solución de 2 clusters es la más robusta, pero 4 o 5 pueden considerarse válidas si se prioriza la riqueza descriptiva sobre la máxima calidad estadística del agrupamiento. Los generamos:
+
+```{r Clustering K-Medoides Clusters}
 clust4 <- pam(coords_pca_fut, k = 4)
 table(clust4$clustering)
 ```
 
+_SELECCIÓN Y VALIDACIÓN DEL MÉTODO_
 
+A la vista de los resultados anteriores, es difícil decantarse por un método en concreto ya que ofrecen resultados similares en algunos casos.
 
+Para tomar una decisión, analizaremos en primer lugar el coeficiente de Silhouette por cluster y por observación (no solamente el global como hasta ahora):
 
-```{r}
+```{r Clustering Validacion}
 library(ggsci)
-colores = pal_npg("nrc")(6)
-colores2 = pal_npg("nrc")(7)
+
+# Puedes ajustar el número de colores a tu número real de clusters
+n_clusters_ward <- length(unique(grupos1))
+n_clusters_kmeans <- length(unique(clust3$cluster))
+n_clusters_pam <- length(unique(clust4$clustering))
+
+colores_ward <- pal_npg("nrc")(n_clusters_ward)
+colores_kmeans <- pal_npg("nrc")(n_clusters_kmeans)
+colores_pam <- pal_npg("nrc")(n_clusters_pam)
+
 par(mfrow = c(1,3))
-plot(silhouette(grupos1, midist_euclidea), col=colores, border=NA, main = "WARD")
-plot(silhouette(clust3$cluster, midist_euclidea), col=colores, border=NA, main = "K-MEDIAS")
-plot(silhouette(clust4$clustering, midist_euclidea), col=colores2, border=NA, main = "K-MEDOIDES")
+plot(
+  silhouette(grupos1, midist_euclidea),
+  col = colores_ward, border = NA, main = "WARD"
+)
+plot(
+  silhouette(clust3$cluster, midist_euclidea),
+  col = colores_kmeans, border = NA, main = "K-MEDIAS"
+)
+plot(
+  silhouette(clust4$clustering, midist_euclidea),
+  col = colores_pam, border = NA, main = "K-MEDOIDES"
+)
 ```
 
-```{r}
-#metodos = c("hierarchical","kmeans","pam")
-#validacion = suppressMessages(clValid(coords_pca_fut, nClust = 2:6, metric = "euclidean", 
-                      #clMethods = metodos, 
-                      #validation = c("internal", "stability"),
-                      #method = "ward"))
-#summary(validacion)
+K-medias presenta la mejor estructura de agrupamiento global, con mayor coherencia y separación entre grupos (mayor Silhouette promedio y menos valores negativos).
+Ward y K-medoides muestran una mayor heterogeneidad interna y algunos clusters con baja calidad, aunque en ambos casos existe al menos un grupo pequeño con buena silueta. 
+Optamos por K-medias con 3 clusters.
+
+Elegiremos, pues, el método de k-medias y conservamos los 3 clusters
+
+_INTERPRETACIÓN DE LOS RESULTADOS DEL CLUSTERING_
+
+En primer lugar, vamos a realizar un análisis de PCA completo para ver cuáles de las variables utilizadas en el clustering han contribuido más a la determinación de los clusters obtenidos mediante k-medias. (*ANEXO 16*)
+
+```{r ANEXO Clustering PCA, include=FALSE}
+# Creamos el factor de clusters
+misclust <- factor(clust3$cluster)
+datosNumericos <- datosNumericos[, sapply(datosNumericos, is.numeric)]
+# Realizamos el PCA sobre la matriz de datos original
+miPCA <- PCA(datosNumericos, scale.unit = FALSE, graph = FALSE)
+
+# Extraemos los valores propios (eigenvalues)
+eig.val <- get_eigenvalue(miPCA)
+
+# Calculamos la varianza media explicada por cada componente
+Vmedia <- 100 * (1 / nrow(eig.val))
+
+# Visualizamos la varianza explicada por componente
+fviz_eig(miPCA, addlabels = TRUE) +
+  geom_hline(yintercept = Vmedia, linetype = 2, color = "red")
 ```
 
+```{r ANEXO Clustering PCA 1-2, include=FALSE}
+# Realiza el PCA con las variables correctas
+miPCA <- PCA(datosNumericos, scale.unit = TRUE, graph = FALSE)
 
+# Paleta de colores adaptada al número de clusters
+colores <- pal_npg("nrc")(length(unique(misclust)))
+
+# Plot de individuos coloreados por cluster y elipses
+p1 <- fviz_pca_ind(
+  miPCA,
+  geom = "point",
+  habillage = misclust,
+  addEllipses = TRUE,
+  palette = colores
+)
+
+# Plot de variables
+p2 <- fviz_pca_var(miPCA, repel = TRUE)
+
+# Mostrar ambos plots juntos
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r ANEXO Custering PCA 3-4, include=FALSE}
+# Visualización de los individuos en los ejes 3 y 4, coloreados por cluster
+p1 <- fviz_pca_ind(
+  miPCA,
+  geom = "point",
+  habillage = misclust,
+  addEllipses = TRUE,
+  axes = c(3, 4),
+  palette = colores
+)
+
+# Visualización de las variables en los ejes 3 y 4
+p2 <- fviz_pca_var(
+  miPCA,
+  axes = c(3, 4),
+  repel = TRUE
+)
+
+# Mostrar ambos gráficos en una sola fila
+grid.arrange(p1, p2, nrow = 1)
+```
+
+Las componentes principales 3 y 4 recogen variabilidad residual que no es útil para separar los clusters principales.
+La mayor parte de la información útil para la segmentación de los jugadores ya se encontraba en las componentes 1 y 2.
+
+Para complementar o ayudar a la interpretación anterior de los clusters mediante PCA, vamos a realizar un gráfico descriptivo del perfil de cada cluster para observar las diferencias entre ellos. Para ello, calcularemos la media de cada variable para cada cluster.(*ANEXO 17*)
+
+```{r ANEXO Custering Interpretacion, include=FALSE}
+# Calcula la media de cada variable para cada cluster
+mediasCluster <- aggregate(datosNumericos, by = list("cluster" = misclust), mean)[,-1]
+
+# Nombra las filas según número de clusters
+rownames(mediasCluster) <- paste0("c", 1:length(unique(misclust)))
+
+# Muestra la tabla (variables en filas, clusters en columnas)
+library(knitr)
+kable(t(round(mediasCluster, 2)))
+```
+
+El análisis de los perfiles medios de cada cluster revela tres grandes grupos de jugadores:
+
+El Cluster 1 se asocia principalmente a roles defensivos, sobresaliendo en estadísticas de despejes, bloqueos y duelos aéreos, pero con escasa contribución en ataque.
+El Cluster 2 agrupa jugadores de perfil mixto o mediocampistas, con valores equilibrados tanto en acciones defensivas como en la circulación y recuperación del balón.
+El Cluster 3 representa a los jugadores ofensivos, con altas medias en goles, remates y acciones de ataque, pero una menor implicación en aspectos defensivos.
+
+```{r Custering Interpretacion Grafico}
+par(mar = c(10, 4, 4, 2)) 
+
+matplot(
+  t(mediasCluster), 
+  type = "l", 
+  col = colores, 
+  ylab = "", 
+  xlab = "", 
+  lwd = 2,
+  lty = 1, 
+  main = "Perfil medio de los clusters", 
+  xaxt = "n"
+)
+
+#para que se vena todas las etiquetas
+axis(
+  side = 1, 
+  at = 1:ncol(mediasCluster), 
+  labels = colnames(mediasCluster), 
+  las = 2, 
+  cex.axis = 0.6
+)
+
+legend(
+  "topleft", 
+  legend = paste("Cluster", 1:nrow(mediasCluster)), 
+  col = colores, 
+  lwd = 2, 
+  ncol = 1, 
+  bty = "n"
+)
+```
+
+En concreto, otras observaciones que vemos son:
+
+El valor de mercado es mayor en c3 (ofensivos), intermedio en c2, y menor en c1 (defensivos), lo que suele ser esperado en el fútbol profesional.
+Respecto a la edad, apenas hay diferencias notorias, pero c1 tiene una ligera tendencia a mayor edad.
+Si nos fijamos en los minutos y partidos c1 juega más minutos en promedio, c3 menos.
+
+```{r Clustering Interpretacion Boxplots}
+aggregate(valor_mercado ~ misclust, data = datosNumericos, mean)
+# Boxplot de valor_mercado por cluster
+boxplot(valor_mercado ~ misclust, data = datosNumericos,
+        main = "Distribución de valor_mercado por cluster",
+        xlab = "Cluster", ylab = "valor_mercado", col= colores)
+
+aggregate(Age ~ misclust, data = datosNumericos, mean)
+# Boxplot de edad por cluster
+boxplot(Age ~ misclust, data = datosNumericos,
+        main = "Distribución de Age por cluster",
+        xlab = "Cluster", ylab = "Age", col= colores)
+
+aggregate(Min ~ misclust, data = datosNumericos, mean)
+# Boxplot de edad por cluster
+boxplot(Min ~ misclust, data = datosNumericos,
+        main = "Distribución de Min por cluster",
+        xlab = "Cluster", ylab = "Min", col= colores)
+```
 
 **REGLAS DE ASOCIACIÓN**
 
@@ -1273,3 +1432,138 @@ En este segundo biplot, donde se representan las dimensiones 3 y 4, no se apreci
 
 Esto sugiere que estas dimensiones no son tan útiles para clasificar a los jugadores por su rol o estilo de juego, aunque sí podrían estar capturando otras características más complejas o difíciles de interpretar, como el valor de mercado, tal y como vimos anteriormente en los gráficos de variables.
 
+*ANEXO 13: Estadístico de Hopkins*
+```{r ANEXO Clustering Hopkins}
+set.seed(69)
+
+myN = c(20, 35)  
+myhopkins = NULL
+myseed <- sample(1:1000, 5)  
+for (i in myN) {
+    for (j in myseed) {
+        tmp = get_clust_tendency(data = coords_pca_fut, n = i, graph = FALSE, seed = j)
+        myhopkins = c(myhopkins, tmp$hopkins_stat)
+    }
+}
+summary(myhopkins)
+```
+
+*ANEXO 14: Método de la Media*
+
+Estimamos a continuación el número óptimo de clusters para el método de la media.
+
+```{r ANEXO Clustering Media}
+p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
+                  hc_method = "average", k.max = 10, verbose = FALSE, 
+                  hc_metric = "euclidean") + labs(title = "Num. óptimo clusters")
+p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "wss", 
+                  hc_method = "average", k.max = 10, verbose = FALSE, 
+                  hc_metric = "euclidean") + labs(title = "Num. óptimo clusters")
+grid.arrange(p1, p2, nrow = 1)
+```
+
+El valor máximo de la silhouette se alcanza claramente para 2 clusters, pero los valores para 3, 4 y hasta 5 clusters siguen siendo relativamente altos (por encima de 0.4), lo que indica que la estructura de agrupamiento sigue siendo razonablemente buena con más de dos grupos. La suma de cuadrados dentro de los grupos disminuye de manera casi lineal, sin un codo muy marcado, aunque la pendiente se suaviza ligeramente a partir de 5 clusters. Probamos con 5 clusters:
+
+```{r  ANEXO Clustering Media Clusters}
+clust2 <- hclust(midist_euclidea, method="average")
+grupos2 = cutree(clust2, k = 5)
+table(grupos2)
+```
+
+La distribución resultante de los 5 clusters usando el método de la media (average) muestra que la gran mayoría de los jugadores (1792) han sido agrupados en un solo cluster, mientras que los otros cuatro clusters solo contienen 1 o 5 jugadores cada uno. Esto indica que el agrupamiento no es efectivo ni equilibrado: la partición no está captando subgrupos relevantes, sino que la mayoría de los datos quedan en un único grupo y los demás son prácticamente outliers. Por lo tanto lo descartamos.
+
+*ANEXO 15: NbClust*
+
+Otra alternativa, es utilizar la librería NbClust, que aplica varios criterios y elegir el número de clusters más votado (por más criterios diferentes). Lo aplicaremos entre 2 y 6 clusters:
+
+```{r ANEXO Clustering NbClust}
+library(NbClust)
+library(clValid)
+res.nbclust <- NbClust(data = coords_pca_fut, diss =midist_euclidea , distance = NULL, 
+                        min.nc = 2, max.nc = 6, 
+                        method = "kmeans", index ="all") 
+```
+
+Según el índice de Hubert y su segunda diferencia, el número óptimo de clusters sería 3. Esto coincide con otros métodos analizados previamente, que también sugerían entre 3 y 4 como opciones razonables. Por tanto, NbClust respalda la elección de 3 clusters como una solución adecuada para segmentar los futbolistas según sus características, aunque la diferencia con 4 o 5 clusters no es excesivamente marcada, por lo que siguen siendo alternativas válidas si se busca mayor riqueza interpretativa. Analizando el índice D y su segunda diferencia, el mayor cambio significativo se produce al pasar de 2 a 3 clusters, por lo que el número óptimo recomendado de grupos según este criterio es 3. 
+
+*ANEXO 16: Clustering - PCA*
+
+```{r ANEXO Clustering PCA}
+# Creamos el factor de clusters
+misclust <- factor(clust3$cluster)
+datosNumericos <- datosNumericos[, sapply(datosNumericos, is.numeric)]
+# Realizamos el PCA sobre la matriz de datos original
+miPCA <- PCA(datosNumericos, scale.unit = FALSE, graph = FALSE)
+
+# Extraemos los valores propios (eigenvalues)
+eig.val <- get_eigenvalue(miPCA)
+
+# Calculamos la varianza media explicada por cada componente
+Vmedia <- 100 * (1 / nrow(eig.val))
+
+# Visualizamos la varianza explicada por componente
+fviz_eig(miPCA, addlabels = TRUE) +
+  geom_hline(yintercept = Vmedia, linetype = 2, color = "red")
+```
+
+La mayor parte de la información se concentra en las primeras 3-4 componentes principales, por lo que para reducir la dimensionalidad, sería razonable quedarse con ellas.
+Los componentes posteriores explican poca varianza y aportan información marginal.
+
+```{r ANEXO Clustering PCA 1-2}
+# Realiza el PCA con las variables correctas
+miPCA <- PCA(datosNumericos, scale.unit = TRUE, graph = FALSE)
+
+# Paleta de colores adaptada al número de clusters
+colores <- pal_npg("nrc")(length(unique(misclust)))
+
+# Plot de individuos coloreados por cluster y elipses
+p1 <- fviz_pca_ind(
+  miPCA,
+  geom = "point",
+  habillage = misclust,
+  addEllipses = TRUE,
+  palette = colores
+)
+
+# Plot de variables
+p2 <- fviz_pca_var(miPCA, repel = TRUE)
+
+# Mostrar ambos plots juntos
+grid.arrange(p1, p2, nrow = 1)
+```
+
+```{r ANEXO Custering PCA 3-4}
+# Visualización de los individuos en los ejes 3 y 4, coloreados por cluster
+p1 <- fviz_pca_ind(
+  miPCA,
+  geom = "point",
+  habillage = misclust,
+  addEllipses = TRUE,
+  axes = c(3, 4),
+  palette = colores
+)
+
+# Visualización de las variables en los ejes 3 y 4
+p2 <- fviz_pca_var(
+  miPCA,
+  axes = c(3, 4),
+  repel = TRUE
+)
+
+# Mostrar ambos gráficos en una sola fila
+grid.arrange(p1, p2, nrow = 1)
+```
+
+*ANEXO 17: Interpretación del Clustering Valores Medios*
+
+```{r ANEXO Custering Interpretacion}
+# Calcula la media de cada variable para cada cluster
+mediasCluster <- aggregate(datosNumericos, by = list("cluster" = misclust), mean)[,-1]
+
+# Nombra las filas según número de clusters
+rownames(mediasCluster) <- paste0("c", 1:length(unique(misclust)))
+
+# Muestra la tabla (variables en filas, clusters en columnas)
+library(knitr)
+kable(t(round(mediasCluster, 2)))
+```
