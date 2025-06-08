@@ -217,18 +217,10 @@ Solo encontramos un dato faltante, en la fila 1877, falta 1 valor en la variable
 Observando el resumen estadístico (*ANEXO 2*) no se identificó ninguna variable constante o datos inconsistentes, para una exploración más en detalle se procede a hacer la visualización de estos datos a continuación.
 
 *Visualización de datos*
-Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.
 
-```{r }
-# Excluir la variable "Min" de numerical_vars
-numerical_vars_without_min <- setdiff(numerical_vars, "Min")
+Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.(*ANEXO 3*)
 
-par(mar = c(9,4,2,2))
-boxplot(datos[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Original)")
-
-```
-
-Visualización de datos con transformación logarítmica
+*Visualización de datos con transformación logarítmica*
 Para mejorar la comparabilidad de las variables, se aplica una transformación logarítmica a las variables numéricas.
 
 ```{r}
@@ -940,5 +932,15 @@ mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
 myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
 myCV = mySD/myMU
 sort(myCV)
+```
+
+*ANEXO 3*
+```{r }
+# Excluir la variable "Min" de numerical_vars
+numerical_vars_without_min <- setdiff(numerical_vars, "Min")
+
+par(mar = c(9,4,2,2))
+boxplot(datos[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Original)")
+
 ```
 
