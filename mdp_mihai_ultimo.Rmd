@@ -4,7 +4,7 @@ output: word_document
 date: "2025-02-26"
 ---
 *Integrantes del grupo A1-18:* 
-                              - Germán Ríos-Capapé Gómez
+                              - Germán Ríos-Capapé 
                               - Jorge Acín Zurita 
                               - Mihai Cristian Mihalache Farcas 
                               - Robert Torres Mingarro 
@@ -110,7 +110,7 @@ Continuando en esa línea, predecir si el valor de mercado de un futbolista es A
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
 ```
 Carga de librerías
@@ -128,32 +128,25 @@ library(stringr)
 library(writexl)
 library(stringdist)
 ```
-Lectura de datos
 
-A continuación, se carga el archivo de datos, se muestran las dimensiones y las primeras filas del dataset, y se crea un resumen estadístico. Además, se crea un data frame descFut que contiene el nombre de las variables y su tipo, este data frame es útil para realizar operaciones específicas en función del tipo de variable, como la conversión de tipos de datos o la selección de variables para análisis posteriores.
+**Preproceso de los Datos y Análisis Exploratorio Inicials**
 
-```{r carga, echo = TRUE}
+*Lectura de datos*
+
+A continuación, se carga el archivo de datos, se muestran las dimensiones y las primeras filas del dataset, y se crea un resumen estadístico (se puede consultar en el *ANEXO 1*). Además, se crea un data frame descFut que contiene el nombre de las variables y su tipo, este data frame es útil para realizar operaciones específicas en función del tipo de variable, como la conversión de tipos de datos o la selección de variables para análisis posteriores.
+
+```{r carga, echo = FALSE}
 # Cargar el archivo de datos
 datos = read_excel("2022-2023_Football_Player_Stats.xlsx")
-
-# Mostrar las dimensiones del dataset
-dim(datos)
-
-# Mostrar las primeras 3 filas del dataset
-head(datos, 3)
-
-# Resumen estadístico del dataset
-summary(datos)
 
 # Crear un data frame con el nombre de las variables y su tipo
 descFut = data.frame("variable" = colnames(datos),
                       "tipo" = c("text", rep("categorical", 4), rep("numerical", 51)), stringsAsFactors = FALSE)
 ```
-Conversión de variables
+*Conversión de variables*
 
 Como algunas variables del dataset eran de tipo string cuando tendíran que ser de tipo númerico, se convierten a tipo numérico utilizando el data frame descFut.
-
-```{r conversión, echo = TRUE}
+```{r conversión, echo = FALSE}
 # Convertir variables de tipo string a tipo numérico según descFut
 numerical_vars <- descFut$variable[descFut$tipo == "numerical"]
 
@@ -161,8 +154,7 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
 ```
-
-Filtrado de datos
+*Filtrado de datos*
 
 Se filtran los datos para eliminar los jugadores que hayan jugado menos de 5 partidos o menos de 200 minutos ya que estos no son relevantes para el objetivo del estudio. Además, los jugadores que habían jugado en varios equipos salían en más de una fila, para evitar esta discrepancia se han agrupado los jugadores (filas) con nombres idénticos y se han borrado las filas de estos que tenían menos minutos disputados.
 
@@ -180,8 +172,23 @@ datos <- anti_join(datos, eliminar_dup, by = c("Player", "Min"))
 ```
 
 
+*CAMBIOS DE POSICIONES*
 
-CAMBIOS DE POSICIONES, COMENTAR TODO TMBN Y REORGANIZAR UN POCO EL SCRIPT
+Podemos apreciar como la base de datos cuenta con posiciones muy concretas u otras que reflejan roles mixtos (por ejemplo, jugadores que actúan entre defensa y centro del campo, o entre extremos y delantera). Para facilitar el análisis y reducir la complejidad de las categorías, se han realizado las siguientes agrupaciones de manera razonada:
+
+1. DFFW y DFMF se agrupan como "CAR" (carrileros) Estas posiciones representan jugadores que ocupan la banda, combinando funciones defensivas y ofensivas.
+
+2. MFDF se han reasignado como "MF" (centrocampistas)Este tipo de jugador tiene un perfil defensivo dentro del centro del campo (habitualmente mediocentros defensivos o pivotes).
+
+Se agrupa con "MF" porque se encuadra dentro del rol de centrocampista, solo que con un matiz más defensivo que no se analiza por separado.
+
+3. MFFW → renombrado como "MCO" (mediocentro ofensivo). Son jugadores que se mueven entre el centro del campo y la delantera, cumpliendo típicamente la función de mediapunta o enganche, un nº10 de toda la vida.
+
+4. FWDF y FWMF → agrupados como "FW" (delanteros) Son jugadores que tienen una orientación ofensiva clara. Su posición base es la de atacante.
+
+Se les incluye en "FW", simplificando la taxonomía sin perder la esencia de su rol principal: atacar.
+
+De esta manera reduciremos la dispersión. Además, agruparemos a los jugadores por las posiciones más claras y esenciales del fútbol, basadas en su zona de influencia predominante.
 ```{r}
 table(datos$Pos)
 carrileros <- datos$Player[datos$Pos == "DFFW"] 
@@ -199,25 +206,17 @@ extremos2 <- datos$Player[datos$Pos == "FWMF"]
 delanteros <- datos$Player[datos$Pos == "FW"] 
 #Como se parecen las juntamos en la misma posición "FW"
 datos$Pos <- ifelse(datos$Pos %in% c("FWDF", "FWMF"), "FW", datos$Pos)
-table(datos$Pos)
+table(datos$Pos[datos$Pos != "GK"])
 ```
-
-
-Análisis estadístico
+*Análisis estadístico*
 
 Para comprobar que no hay datos anómalos, constantes o inconsistentes se realiza un análisis estadístico de las variables numéricas, calculando la desviación estándar, la media y el coeficiente de variación. Finalmente, se ordena el coeficiente de variación.
 
-```{r analisis_estadistico, echo=TRUE}
-summary(datos[,descFut$variable[descFut$tipo == "numerical"]])
-mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
-myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
-myCV = mySD/myMU
-sort(myCV)
-```
 Solo encontramos un dato faltante, en la fila 1877, falta 1 valor en la variable categórica nominal Nation, referente al país del jugador David Ozoh. Al ser solamente 1 valor faltante y pudiendo consultarlo fácilmente, le hemos añadido manualmente el valor “ENG”, correspondiente al país de Inglaterra.
-Observando el resumen estadístico no se identificó ninguna variable constante o datos inconsistentes, para una exploración más en detalle se procede a hacer la visualización de estos datos a continuación.
 
-Visualización de datos
+Observando el resumen estadístico (*ANEXO 2*) no se identificó ninguna variable constante o datos inconsistentes, para una exploración más en detalle se procede a hacer la visualización de estos datos a continuación.
+
+*Visualización de datos*
 Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.
 
 ```{r }
@@ -916,3 +915,30 @@ Por el contrario, los jugadores de valor bajo tienden a tener menor participaci�
 Finalmente, cuando se analiza la probabilidad con la que el modelo asigna una categoría a cada jugador, se ve que en la mayoría de los casos está muy seguro. Por ejemplo, hay jugadores para los que la probabilidad de estar en la categoría "Bajo" supera el 99 %, lo que demuestra que su perfil es muy claro. Solo en algunos pocos casos hay algo de duda entre dos clases, sobre todo entre las categorías "Bajo" y "Medio".
 
 En conjunto, todos estos resultados muestran que el modelo no solo es muy preciso, sino también coherente: reconoce correctamente a los jugadores según su rendimiento y logra diferenciar claramente a los de mayor valor de mercado, que suelen tener un perfil ofensivo más destacado.
+
+
+
+**ANEXOS**
+
+*ANEXO 1*
+```{r carga, echo = FALSE}
+# Mostrar las dimensiones del dataset
+dim(datos)
+
+# Mostrar las primeras 3 filas del dataset
+head(datos, 3)
+
+# Resumen estadístico del dataset
+summary(datos)
+```
+
+*ANEXO 2*
+
+```{r analisis_estadistico, echo=TRUE}
+summary(datos[,descFut$variable[descFut$tipo == "numerical"]])
+mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
+myMU = colMeans(datos[,descFut$variable[descFut$tipo == "numerical"]])
+myCV = mySD/myMU
+sort(myCV)
+```
+
