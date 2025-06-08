@@ -4,7 +4,7 @@ output: word_document
 date: "2025-02-26"
 ---
 *Integrantes del grupo A1-18:* 
-                              - Germán Ríos-Capapé 
+                              - Germán Ríos-Capapé Gómez
                               - Jorge Acín Zurita 
                               - Mihai Cristian Mihalache Farcas 
                               - Robert Torres Mingarro 
@@ -271,19 +271,12 @@ Observando el resumen estadístico del valor de mercado de los futbolistas se re
 
 Selección del número de PCs
 
-```{r }
+```{r, message=FALSE, warning=FALSE}
 datos2 = datos
-datos2[1:5,]
 datos2[, numerical_vars] = scale(datos[, numerical_vars], center = TRUE, scale = TRUE)
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = 17, 
         quali.sup = 1:5, quanti.sup = 57)
 eig.val <- get_eigenvalue(res.pca)
-VPmedio = 100 * (1/nrow(eig.val))
-fviz_eig(res.pca, addlabels = TRUE) +
-    geom_hline(yintercept=VPmedio, linetype=2, color="red")
-```
-
-```{r }
 kable(eig.val[1:20,])
 ```
 Para empezar con el PCA, primero analizamos cuántas componentes principales nos interesa conservar. En la tabla de eigenvalues observamos que las 6 primeras componentes explican cerca del 60% de la variabilidad total, así que hemos decidido quedarnos con esas seis.
@@ -336,33 +329,9 @@ fviz_pca_ind(res.pca, axes = c(3,4), geom = "point", repel = TRUE, labelsize = 2
 ```
 A diferencia del gráfico anterior, como se anticipaba, en este gráfico de las dimensiones 3 y 4 no se aprecia una separación clara entre posiciones. Como podemos ver, los grupos se solapan totalmente entre sí, lo que confirma que estas componentes no capturan bien el rol táctico y posicional de los jugadores en el campo.
 
-
-A continuación, se muestran cuatro gráficos de barras que indican cuánto contribuye cada variable a la construcción de las primeras cuatro componentes principales. Cuanto mayor es la barra, mayor es la influencia de esa variable en la componente correspondiente.
-```{r}
-fviz_contrib(res.pca, choice = "var", axes = 1)
-fviz_contrib(res.pca, choice = "var", axes = 2)
-fviz_contrib(res.pca, choice = "var", axes = 3)
-fviz_contrib(res.pca, choice = "var", axes = 4)
-```
-Estos gráficos nos permiten interpretar el significado de cada dimensión: por ejemplo, en Dim1 predominan variables relacionadas con los pases y la actividad ofensiva y defensiva, mientras que en Dim2 tienen más peso las acciones en el tercio ofensivo como asistencias sin gol, centros o conducciones en zona de ataque. En Dim3 y Dim4 destacan variables defensivas como entradas y bloqueos, así como algunas estadísticas asociadas al valor de mercado —es decir, aquellas que en los gráficos de variables anteriores aparecían alineadas con la variable `valor_mercado`—, lo que refuerza la interpretación previa de que esas dimensiones capturan información más económica que posicional.
-
-```{r}
-fviz_pca_biplot(res.pca, axes = c(1,2), labelsize = 3,
-                label = "var", repel = TRUE, 
-                col.ind = datos$Pos)
-```
-En este biplot representamos simultáneamente a los jugadores (como puntos) y a las variables originales (como flechas) en el plano formado por las dimensiones 1 y 2. Esta visualización nos permite observar cómo se distribuyen los jugadores según su posición, y qué variables influyen más en cada zona del gráfico.
-
-Podemos ver claramente que los delanteros (FW) se agrupan en la zona izquierda, donde predominan variables ofensivas como tiros o conducciones, mientras que los defensores (DF) se concentran a la derecha, cerca de variables relacionadas con despejes o intercepciones. Los centrocampistas (MF y MCO) aparecen más dispersos por el centro del gráfico, lo que tiene sentido dada su variedad de roles. También se puede observar que los carrileros (CAR) aparecen repartidos por todo el plano, lo cual tiene sentido dado su rol mixto entre defensa y ataque. Este gráfico refuerza la idea de que las primeras dos dimensiones del PCA separan bien a los jugadores según su función en el campo.
-
-```{r}
-fviz_pca_biplot(res.pca, axes = c(3,4), labelsize = 3,
-                label = "var", repel = TRUE, 
-                col.ind = datos$Pos)
-```
-En este segundo biplot, donde se representan las dimensiones 3 y 4, no se aprecia una separación clara entre las posiciones. La mayoría de los puntos están muy concentrados en el centro del gráfico, y las flechas de las variables aparecen muy juntas entre sí.
-
-Esto sugiere que estas dimensiones no son tan útiles para clasificar a los jugadores por su rol o estilo de juego, aunque sí podrían estar capturando otras características más complejas o difíciles de interpretar, como el valor de mercado, tal y como vimos anteriormente en los gráficos de variables.
+(Ver Scree Plot en el Anexo 6)
+(Ver los gráficos de contribución en el Anexo 7 para comprobar qué variables influyen más en cada una de las primeras componentes)
+(Ver los biplots de las componentes 1–4 en el Anexo 8 para más detalle visual sobre la distribución y orientación de las variables y jugadores)
 
 
 
@@ -1113,6 +1082,16 @@ plot(x =)
 
 **ANEXOS**
 
+-Anexo 1: ...
+-Anexo 2: ...
+-Anexo 3: ....
+-Anexo 4: ...
+-Anexo 5: ..
+-Anexo 6: Scree plot
+-Anexo 7: Gráficos de contribución de las variables a las primeras componentes
+-Anexo 8: Biplots de las componentes principales
+
+
 *ANEXO 1*
 ```{r carga, echo = FALSE}
 # Mostrar las dimensiones del dataset
@@ -1183,3 +1162,40 @@ for (group_name in names(num_vars_groups)) {
   boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (", group_name, ")", sep = ""))
 }
 ```
+
+*ANEXO 6: Scree plot*
+```{r }
+VPmedio = 100 * (1/nrow(eig.val))
+fviz_eig(res.pca, addlabels = TRUE) +
+    geom_hline(yintercept=VPmedio, linetype=2, color="red")
+```
+
+*ANEXO 7: Gráficos de contribución de las variables a las primeras componentes*
+A continuación, se muestran cuatro gráficos de barras que indican cuánto contribuye cada variable a la construcción de las primeras cuatro componentes principales. Cuanto mayor es la barra, mayor es la influencia de esa variable en la componente correspondiente.
+```{r}
+fviz_contrib(res.pca, choice = "var", axes = 1)
+fviz_contrib(res.pca, choice = "var", axes = 2)
+fviz_contrib(res.pca, choice = "var", axes = 3)
+fviz_contrib(res.pca, choice = "var", axes = 4)
+```
+Estos gráficos nos permiten interpretar el significado de cada dimensión: por ejemplo, en Dim1 predominan variables relacionadas con los pases y la actividad ofensiva y defensiva, mientras que en Dim2 tienen más peso las acciones en el tercio ofensivo como asistencias sin gol, centros o conducciones en zona de ataque. En Dim3 y Dim4 destacan variables defensivas como entradas y bloqueos, así como algunas estadísticas asociadas al valor de mercado —es decir, aquellas que en los gráficos de variables anteriores aparecían alineadas con la variable `valor_mercado`—, lo que refuerza la interpretación previa de que esas dimensiones capturan información más económica que posicional.
+
+*ANEXO 8: Biplots de las componentes principales*
+```{r}
+fviz_pca_biplot(res.pca, axes = c(1,2), labelsize = 3,
+                label = "var", repel = TRUE, 
+                col.ind = datos$Pos)
+```
+En este biplot representamos simultáneamente a los jugadores (como puntos) y a las variables originales (como flechas) en el plano formado por las dimensiones 1 y 2. Esta visualización nos permite observar cómo se distribuyen los jugadores según su posición, y qué variables influyen más en cada zona del gráfico.
+
+Podemos ver claramente que los delanteros (FW) se agrupan en la zona izquierda, donde predominan variables ofensivas como tiros o conducciones, mientras que los defensores (DF) se concentran a la derecha, cerca de variables relacionadas con despejes o intercepciones. Los centrocampistas (MF y MCO) aparecen más dispersos por el centro del gráfico, lo que tiene sentido dada su variedad de roles. También se puede observar que los carrileros (CAR) aparecen repartidos por todo el plano, lo cual tiene sentido dado su rol mixto entre defensa y ataque. Este gráfico refuerza la idea de que las primeras dos dimensiones del PCA separan bien a los jugadores según su función en el campo.
+
+```{r}
+fviz_pca_biplot(res.pca, axes = c(3,4), labelsize = 3,
+                label = "var", repel = TRUE, 
+                col.ind = datos$Pos)
+```
+En este segundo biplot, donde se representan las dimensiones 3 y 4, no se aprecia una separación clara entre las posiciones. La mayoría de los puntos están muy concentrados en el centro del gráfico, y las flechas de las variables aparecen muy juntas entre sí.
+
+Esto sugiere que estas dimensiones no son tan útiles para clasificar a los jugadores por su rol o estilo de juego, aunque sí podrían estar capturando otras características más complejas o difíciles de interpretar, como el valor de mercado, tal y como vimos anteriormente en los gráficos de variables.
+
