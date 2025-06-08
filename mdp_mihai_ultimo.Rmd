@@ -586,14 +586,14 @@ midist_manh <- get_dist(coords_pca_fut, stand = FALSE, method = "manhattan")
 ```{r}
 set.seed(69)
 
-myN = c(20, 35, 50, 65)  # m
+myN = c(20, 35)  
 myhopkins = NULL
-myseed <- sample(1:1000, 20)
+myseed <- sample(1:1000, 5)  
 for (i in myN) {
-  for (j in myseed) {
-    tmp = get_clust_tendency(data = coords_pca_fut, n = i, graph = FALSE, seed = j)
-    myhopkins = c(myhopkins, tmp$hopkins_stat)
-  }
+    for (j in myseed) {
+        tmp = get_clust_tendency(data = coords_pca_fut, n = i, graph = FALSE, seed = j)
+        myhopkins = c(myhopkins, tmp$hopkins_stat)
+    }
 }
 summary(myhopkins)
 ```
@@ -698,14 +698,104 @@ plot(silhouette(clust4$clustering, midist_euclidea), col=colores2, border=NA, ma
 ```
 
 ```{r}
-metodos = c("hierarchical","kmeans","pam")
-validacion = suppressMessages(clValid(coords_pca_fut, nClust = 2:6, metric = "euclidean", 
-                      clMethods = metodos, 
-                      validation = c("internal", "stability"),
-                      method = "ward"))
-summary(validacion)
+#metodos = c("hierarchical","kmeans","pam")
+#validacion = suppressMessages(clValid(coords_pca_fut, nClust = 2:6, metric = "euclidean", 
+                      #clMethods = metodos, 
+                      #validation = c("internal", "stability"),
+                      #method = "ward"))
+#summary(validacion)
 ```
 
 ```{r}
 
 ```
+
+En el desarrollo de este proyecto, uno de los objetivos principales ha sido identificar de manera clara y fundamentada cómo las distintas estadísticas de juego de los futbolistas pueden estar relacionadas con su nivel de valor en el mercado. Para abordar este objetivo, se ha optado por aplicar un Análisis Discriminante Lineal (LDA), una técnica estadística multivariante que resulta especialmente útil cuando se pretende clasificar observaciones en categorías previamente definidas en función de múltiples variables predictoras.
+
+El motivo principal por el que se ha elegido este enfoque es que se dispone de una variable categórica que representa el nivel de valor de mercado del jugador —clasificado en tres grupos: bajo, medio y alto— y se busca comprobar si las demás variables cuantitativas (como goles, minutos, asistencias, pases, regates, entre otras) pueden discriminar de forma significativa entre estas categorías. Es decir, se pretende averiguar si existe una estructura en los datos que permita predecir el valor de mercado de un jugador a partir de su rendimiento estadístico.
+
+El análisis discriminante resulta adecuado porque, además de clasificar, permite obtener funciones discriminantes que muestran qué combinaciones de variables explican mejor la separación entre grupos. Estas funciones no solo ayudan a construir un modelo predictivo, sino que también ofrecen información interpretativa sobre cuáles son las variables más influyentes en la diferenciación de los grupos definidos.
+
+Además, se ha considerado que esta técnica puede facilitar la visualización de la separación entre las clases, lo cual puede ser útil tanto para validar el modelo como para comunicar los resultados de forma clara. Al proyectar los datos sobre las funciones discriminantes (LD1, LD2...), se puede representar gráficamente hasta qué punto los grupos se separan entre sí, y si la segmentación realizada tiene sentido desde el punto de vista estadístico y práctico.
+
+Por otra parte, como paso previo a la aplicación del análisis discriminante, se ha realizado una agrupación de los valores de mercado mediante k-means, con el fin de construir la variable categórica que será utilizada como criterio de clasificación. Esta decisión permite transformar una variable continua (el valor económico del jugador) en una variable categórica más adecuada para el análisis que se quiere realizar.  
+
+```{r Análisis Discriminante}
+datosNumericos = datos2[,descFut$tipo == "numerical"]
+datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League"))]
+datosNumericos = scale(datosNumericos, center = TRUE, scale = TRUE)
+datosNumericos <- as.data.frame(datosNumericos)
+
+# Aplicar k-means para agrupar en 3 categorías de valor_mercado
+set.seed(123)  # Para reproducibilidad
+k_clusters <- kmeans(datosNumericos$valor_mercado, centers = 3)
+datosNumericos$valor_mercado_cat <- factor(k_clusters$cluster)
+niveles_ordenados <- order(tapply(datosNumericos$valor_mercado, k_clusters$cluster, mean))
+datosNumericos$valor_mercado_cat <- factor(datosNumericos$valor_mercado_cat, 
+                                            levels = niveles_ordenados,
+                                            labels = c("Bajo", "Medio", "Alto"))
+
+# Ver tabla de frecuencias
+table(datosNumericos$valor_mercado_cat)
+
+set.seed(100)
+library(caret)
+library(MASS)
+trainFilas = createDataPartition(datosNumericos$valor_mercado_cat, p=0.8, list=FALSE)
+trainDatosW = datosNumericos[trainFilas,]
+testDatosW = datosNumericos[-trainFilas,]
+
+trainDatosW$valor_mercado_cat <- NULL
+testDatosW$valor_mercado_cat <- NULL
+
+trainDatosWESC = trainDatosW
+trainDatosWESC[,-1] = scale(trainDatosW[,-1], center = TRUE, scale = TRUE)
+testDatosWESC = testDatosW
+testDatosWESC[,-1] = scale(testDatosW[,-1], center = colMeans(trainDatosW[,-1]), 
+                     scale = apply(trainDatosW[,-1], 2, sd))
+
+trainDatosWESC$valor_mercado_cat <- datosNumericos[trainFilas,]$valor_mercado_cat
+modeloTR = lda(valor_mercado_cat ~ ., data = trainDatosWESC, CV = FALSE) 
+modeloTR$prior
+
+modeloTR$means
+
+head(modeloTR$scaling) # coeficientes de la FDL
+
+# Matriz de confusión para entrenamiento
+trainDatosW <- trainDatosWESC
+ajusteTR = predict(modeloTR)
+caret::confusionMatrix(ajusteTR$class, trainDatosW$valor_mercado_cat)
+
+# Matriz de confusión para test
+testDatosWESC$valor_mercado_cat <- datosNumericos[-trainFilas,]$valor_mercado_cat
+testDatosW <- testDatosWESC
+ajusteTest = predict(modeloTR, testDatosWESC)
+caret::confusionMatrix(ajusteTest$class, testDatosW$valor_mercado_cat)
+
+head(ajusteTest$posterior)
+
+head(ajusteTest$x)  #  z (puntuaciones discriminantes)
+
+datosE = rbind(trainDatosWESC, testDatosWESC)
+plot.df <- data.frame(predict(modeloTR, newdata = datosE)$x, "Outcome" = datosE$valor_mercado_cat)
+library(ggplot2)
+ggplot(plot.df, aes(x = LD1, y = LD2, color = Outcome)) + geom_point()
+```
+
+Resultados del análisis discriminante
+El modelo desarrollado para clasificar a los jugadores según su valor de mercado ha mostrado un desempeño muy sólido. En el gráfico, se observa claramente cómo los tres grupos (Bajo, Medio y Alto) están bien separados, sobre todo en el eje horizontal (LD1), que es el que más ayuda a distinguir entre los niveles. Los jugadores de valor bajo se agrupan a la izquierda, los de nivel medio en el centro, y los de valor alto a la derecha, formando tres zonas bien definidas. Esto indica que las características de los jugadores son lo suficientemente distintas como para que el modelo pueda clasificarlos de forma precisa.
+
+En cuanto a los resultados numéricos, la precisión del modelo alcanza un 97.36% en el conjunto de entrenamiento y un 96.66% en los datos de prueba, lo cual confirma que el modelo no solo aprende bien con los datos que ha visto, sino que también mantiene un buen rendimiento con datos nuevos. La puntuación Kappa, que mide la calidad del modelo teniendo en cuenta el azar, es muy alta: 0.9261 en entrenamiento y 0.9048 en prueba. Estos valores indican que el modelo tiene una capacidad de clasificación muy confiable.
+
+Al observar con más detalle las medidas por grupo, se ve que la sensibilidad (es decir, la capacidad del modelo para detectar correctamente a los jugadores de cada categoría) es perfecta para los de valor bajo, bastante alta para los de nivel medio (alrededor de 85 %) y también muy buena para los de valor alto (entre 86% y 95%). Además, la especificidad (es decir, cuán bien el modelo evita confundirlos con otras clases) es muy alta para todos los grupos, alcanzando incluso el 100 % en el caso de los jugadores de valor alto.
+
+Esto se ve reflejado en la matriz de confusión, donde prácticamente no hay errores: por ejemplo, ningún jugador de valor bajo fue confundido con uno de valor alto, y los errores más comunes ocurren entre las clases "Bajo" y "Medio", lo cual es esperable, ya que estos grupos tienen perfiles más parecidos.
+
+En cuanto a las características que más influyen en la clasificación, se observa que los jugadores de valor alto destacan especialmente en acciones ofensivas: tienen más minutos jugados, más goles, más asistencias, más disparos, más toques en el tercio ofensivo y en el área rival, más regates y más participaciones en jugadas de gol. También se mueven más en zonas avanzadas del campo y tienen mejor rendimiento en estadísticas como precisión de pases largos, centros al área y pases completados.
+
+Por el contrario, los jugadores de valor bajo tienden a tener menor participación ofensiva y destacan menos en estadísticas de creación de juego o definición. En general, su perfil está más asociado a tareas defensivas o menos visibles, aunque estas tienen menos peso a la hora de determinar el valor de mercado.
+
+Finalmente, cuando se analiza la probabilidad con la que el modelo asigna una categoría a cada jugador, se ve que en la mayoría de los casos está muy seguro. Por ejemplo, hay jugadores para los que la probabilidad de estar en la categoría "Bajo" supera el 99 %, lo que demuestra que su perfil es muy claro. Solo en algunos pocos casos hay algo de duda entre dos clases, sobre todo entre las categorías "Bajo" y "Medio".
+
+En conjunto, todos estos resultados muestran que el modelo no solo es muy preciso, sino también coherente: reconoce correctamente a los jugadores según su rendimiento y logra diferenciar claramente a los de mayor valor de mercado, que suelen tener un perfil ofensivo más destacado.
