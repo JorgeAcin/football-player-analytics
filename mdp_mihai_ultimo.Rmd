@@ -1,8 +1,113 @@
 ---
-title: "MDP I"
+title: "Los Datos detrás del balón - Trabajo Académico MDP I"
 output: word_document
 date: "2025-02-26"
 ---
+*Integrantes del grupo A1-18:* 
+                              - Germán Ríos-Capapé 
+                              - Jorge Acín Zurita 
+                              - Mihai Cristian Mihalache Farcas 
+                              - Robert Torres Mingarro 
+                              - Rubén Tormo Piles 
+
+**INTRODUCCIÓN**
+                             
+*Descripción general*
+
+El fútbol es un tópico candente que podemos encontrar y escuchar en nuestra vida cotidiana. Siempre hay alguna persona hablando de algún partido, un grupo comentado jugadas de cierto futbolista o simplemente teniendo debates futbolísticos. Este deporte está en auge, y cada vez se intenta hilar más fino para poder optimizar y sacarle el máximo rendimiento a los jugadores y equipos. Prácticamente todo está monitorizado, se puede saber que hace cada jugador en cada partido disputado, y es por ello que cada detalle cuenta. 
+Equipos como el Brentford (en Inglaterra) o el Parma (en Italia), deben gran parte de sus éxitos recientes, como ascender a la primera liga de sus respectivos países, gracias a sus equipos de analistas de datos. Siendo estos conjuntos pioneros en este campo, muchos equipos de talla mundial han seguido sus pasos y han incorporado expertos en análisis de datos en sus filas. Por todo esto, nos resultaba de gran interés realizar un trabajo en esta línea.
+
+Nuestra base de datos recoge estadísticas de jugadores de fútbol en diferentes ligas europeas durante la temporada 2022-2023. Incluye datos generales (edad, equipo, nacionalidad), rendimiento ofensivo (goles, asistencias, disparos), rendimiento defensivo (intercepciones, entradas, despejes) y disciplina (tarjetas, faltas), asimismo cuenta con estadísticas más detalladas en todos estos campos.
+
+Contamos con un total de registros: 2689.
+
+Cada observación representa: el rendimiento de un jugador en la temporada 2022-2023 de las cinco grandes ligas europeas (Premier League, Ligue 1, Bundesliga, Serie A y La Liga).
+
+Fuente de obtención de los datos:
+
+La base de datos se obtiene a través de la web de Kaggle: https://www.kaggle.com/datasets/vivovinco/20222023-football-player-stats 
+No obstante, estos datos fueron recopilados de la web de Football Reference: https://fbref.com/en/comps/Big5/stats/players/Big-5-European-Leagues-Stats
+
+*Descripción de las variables*
+
+Después de realizar una primera fase de limpieza donde nos quedamos con las variables que consideramos relevantes:
+
+Contamos con un total de 56 variables, de las cuales 4 son categóricas y 52 son numéricas. 
+Cabe destacar que las 4 variables categóricas son nominales y de las 52 variables 
+numéricas hay 4 discretas y 48 continuas. 
+La variable Player, no se usará realmente para el análisis, pero es necesaria para poder 
+identificar al futbolista deseado.
+
+Vamos a describir todas las variables empleadas:
+
+1. **Player** – Texto: Nombre del jugador
+2. **Nation** – Categórica nominal: País del jugador
+3. **Pos** – Categórica nominal: Posición en el terreno de juego
+4. **Team** – Categórica nominal: Equipo para el que juega
+5. **League** – Categórica nominal: Liga en la que juega
+6. **Age** – Cuantitativa discreta: Edad del jugador
+7. **MatchP** – Cuantitativa discreta: Número de partidos jugados
+8. **Min** – Cuantitativa discreta: Minutos totales jugados
+9. **Goals** – Cuantitativa discreta: Goles marcados
+10. **Shots** – Cuantitativa continua: Tiros por partido
+11. **SoT** – Cuantitativa continua: Tiros a puerta por partido
+12. **G/Sh** – Cuantitativa continua: Goles por tiro
+13. **PasTotCmp** – Cuantitativa continua: Pases completados por partido
+14. **PasTotAtt** – Cuantitativa continua: Pases intentados por partido
+15. **PasTotCmp%** – Cuantitativa continua: Porcentaje de pases completados
+16. **PasLonCmp** – Cuantitativa continua: Pases largos completados (>30m) por partido
+17. **PasLonAtt** – Cuantitativa continua: Pases largos intentados (>30m) por partido
+18. **PasLonCmp%** – Cuantitativa continua: Porcentaje de pases largos completados
+19. **Assists** – Cuantitativa continua: Asistencias de gol por partido
+20. **Assists no goal** – Cuantitativa continua: Asistencias que terminan en tiro sin ser gol
+21. **Pas3rd** – Cuantitativa continua: Pases al tercio ofensivo completados
+22. **PPA** – Cuantitativa continua: Pases al área completados
+23. **CrsPA** – Cuantitativa continua: Centros al área completados
+24. **SCA** – Cuantitativa continua: Acciones que terminan en tiro
+25. **ScaDrib** – Cuantitativa continua: Regates que terminan en tiro
+26. **Tkl** – Cuantitativa continua: Entradas intentadas por partido
+27. **TklWon** – Cuantitativa continua: Entradas exitosas con recuperación
+28. **TklDri** – Cuantitativa continua: Entradas exitosas a regateadores
+29. **Blocks** – Cuantitativa continua: Bloqueos por partido
+30. **BlkSh** – Cuantitativa continua: Tiros bloqueados por partido
+31. **Int** – Cuantitativa continua: Intercepciones por partido
+32. **Tkl+Int** – Cuantitativa continua: Entradas + intercepciones por partido
+33. **Clr** – Cuantitativa continua: Despejes por partido
+34. **Err** – Cuantitativa continua: Errores que terminan en tiro del rival
+35. **Touches** – Cuantitativa continua: Toques por partido
+36. **TouDef3rd** – Cuantitativa continua: Toques en el tercio defensivo
+37. **TouMid3rd** – Cuantitativa continua: Toques en el tercio medio
+38. **TouAtt3rd** – Cuantitativa continua: Toques en el tercio ofensivo
+39. **TouAttPen** – Cuantitativa continua: Toques en el área rival
+40. **DriAtt** – Cuantitativa continua: Regates intentados por partido
+41. **DriSuc** – Cuantitativa continua: Regates exitosos por partido
+42. **ToSuc%** – Cuantitativa continua: Porcentaje de regates exitosos
+43. **Car3rd** – Cuantitativa continua: Conducciones hasta el tercio ofensivo
+44. **CPA** – Cuantitativa continua: Conducciones hasta el área
+45. **CrdY** – Cuantitativa continua: Tarjetas amarillas por partido
+46. **CrdR** – Cuantitativa continua: Tarjetas rojas por partido
+47. **FlC** – Cuantitativa continua: Faltas cometidas por partido
+48. **FlD** – Cuantitativa continua: Faltas recibidas por partido
+49. **Off** – Cuantitativa continua: Fueras de juego por partido
+50. **PKD** – Cuantitativa continua: Penaltis provocados por partido
+51. **PKC** – Cuantitativa continua: Penaltis cometidos por partido
+52. **OG** – Cuantitativa continua: Goles en propia puerta por partido
+53. **Recov** – Cuantitativa continua: Balones recuperados
+54. **AerWon** – Cuantitativa continua: Duelos aéreos ganados
+55. **AerLost** – Cuantitativa continua: Duelos aéreos perdidos
+56. **AerWon%** – Cuantitativa continua: Porcentaje de duelos aéreos ganados
+
+*Objetivos del estudio*
+
+Nuestros objetivos del trabajo son varios: 
+
+- La segmentación de jugadores según estilo de juego:  Buscamos encontrar grupos naturales de futbolistas con estilos de  juego similares
+
+- Descubrir que estadísticas son las que más afectan y determinan el valor de mercado de un futbolista.
+
+- Llegar a predecir la cantidad de goles de un futbolista, al fin y al cabo un partido lo gana el que más goles marca. 
+Continuando en esa línea, predecir si el valor de mercado de un futbolista es Alto/Medio/Bajo según sus características.
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
