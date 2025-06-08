@@ -221,49 +221,16 @@ Observando el resumen estadístico (*ANEXO 2*) no se identificó ninguna variabl
 Para visualizar la distribución de las variables numéricas, se crea un diagrama de cajas y bigotes. Se excluye la variable Min para evitar que su escala desproporcionada afecte la visualización de las otras variables.(*ANEXO 3*)
 
 *Visualización de datos con transformación logarítmica*
-Para mejorar la comparabilidad de las variables, se aplica una transformación logarítmica a las variables numéricas.
+Para mejorar la comparabilidad de las variables, se aplica una transformación logarítmica a las variables numéricas (*ANEXO 4*)
 
-```{r}
-# Excluir la variable "Min" de numerical_vars
-numerical_vars_without_min <- setdiff(numerical_vars, "Min")
-# Aplicar una transformación logarítmica a las variables numéricas
-datos_log <- datos
-datos_log[numerical_vars] <- lapply(datos_log[numerical_vars], function(x) log1p(x))
+*Visualización de datos en grupos*
+Para mejorar la legibilidad, se dividen las variables en grupos más pequeños y se crean varios gráficos de boxplot.(*ANEXO 5*)
 
-par(mar = c(9,4,2,2))
-boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Transformación Logarítmica)")
-```
+Después de realizar las visualizaciones de como se distribuyen las estdísticas de los jugadores, apreciamos como hay anómalos en casi todas las variables. Ya que no hay un error en la entrada de datos, estos serán jugadores que destaquen (positivamente o negativamente) en dicha variable
 
-Visualización de datos en grupos
-Para mejorar la legibilidad, se dividen las variables en grupos más pequeños y se crean varios gráficos de boxplot.
+**Añadir el Valor de Mercado**
 
-```{r}
-# Dividir las variables en grupos más pequeños para mejorar la legibilidad
-num_vars <- descFut$variable[descFut$tipo == "numerical"]
-
-# Calcular los rangos de las variables
-variable_ranges <- sapply(datos[, num_vars], function(x) max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
-
-# Agrupar las variables en categorías lógicas basadas en su magnitud
-group_large <- names(variable_ranges[variable_ranges > 100])
-group_medium <- names(variable_ranges[variable_ranges <= 100 & variable_ranges > 10])
-group_small <- names(variable_ranges[variable_ranges <= 10])
-
-# Crear una lista de grupos
-num_vars_groups <- list(
-  "Large Magnitude" = group_large,
-  "Medium Magnitude" = group_medium,
-  "Small Magnitude" = group_small
-)
-
-par(mfrow = c(2, 2), mar = c(9,4,2,2))  # Dividir la ventana gráfica en una cuadrícula de 2x2
-for (group_name in names(num_vars_groups)) {
-  group <- num_vars_groups[[group_name]]
-  boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (", group_name, ")", sep = ""))
-}
-```
-
-Cabe recalcar que el valor de mercado de los jugadores se ha extraído de la web de transfermarkt con ayuda de la inteligencia artificial. El valor de mercado escogido fue el de septiembre de 2022, acorde con el principio de dicha temporada.
+Para poder llegar a completar nuestros objetivos, además de añadir una variable sumamente interesante para nuestros análisis procederemos a añadir los valores de mercado de los futbolistas de nuestro dataset.Cabe recalcar que el valor de mercado de los jugadores se ha extraído de la web de transfermarkt con ayuda de la inteligencia artificial. El valor de mercado escogido fue el de septiembre de 2022, acorde con el principio de dicha temporada.
 
 Asimismo, hemos corregido los nombres con carácteres desconocidos que se marcaban como '?'.
 
@@ -298,6 +265,8 @@ datos[numerical_vars] <- lapply(datos[numerical_vars], function(x) {
   as.numeric(as.character(x))
 })
 ```
+Observando el resumen estadístico del valor de mercado de los futbolistas se revela una fuerte desigualdad. Aunque el valor medio se sitúa en 11,69 millones, la mediana es notablemente inferior (5 millones), lo que indica que la mayoría de los jugadores tienen un valor relativamente bajo y que existen unos pocos con cifras extremadamente altas que elevan la media. De hecho, el valor máximo alcanza los 160 millones, evidenciando la presencia de superestrellas con precios desorbitados. Por otro lado, un 25% de los jugadores no supera los 2 millones, y el 75% se encuentra por debajo de los 15 millones, lo que confirma que el grueso del mercado está formado por jugadores de menor coste.
+
 **Análisis de Componentes Principales (PCA)**
 
 Selección del número de PCs
@@ -938,4 +907,42 @@ par(mar = c(9,4,2,2))
 boxplot(datos[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Original)")
 
 ```
+*ANEXO 4*
 
+```{r}
+# Excluir la variable "Min" de numerical_vars
+numerical_vars_without_min <- setdiff(numerical_vars, "Min")
+# Aplicar una transformación logarítmica a las variables numéricas
+datos_log <- datos
+datos_log[numerical_vars] <- lapply(datos_log[numerical_vars], function(x) log1p(x))
+
+par(mar = c(9,4,2,2))
+boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Transformación Logarítmica)")
+```
+
+*ANEXO 5*
+```{r}
+# Dividir las variables en grupos más pequeños para mejorar la legibilidad
+num_vars <- descFut$variable[descFut$tipo == "numerical"]
+
+# Calcular los rangos de las variables
+variable_ranges <- sapply(datos[, num_vars], function(x) max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+
+# Agrupar las variables en categorías lógicas basadas en su magnitud
+group_large <- names(variable_ranges[variable_ranges > 100])
+group_medium <- names(variable_ranges[variable_ranges <= 100 & variable_ranges > 10])
+group_small <- names(variable_ranges[variable_ranges <= 10])
+
+# Crear una lista de grupos
+num_vars_groups <- list(
+  "Large Magnitude" = group_large,
+  "Medium Magnitude" = group_medium,
+  "Small Magnitude" = group_small
+)
+
+par(mfrow = c(2, 2), mar = c(9,4,2,2))  # Dividir la ventana gráfica en una cuadrícula de 2x2
+for (group_name in names(num_vars_groups)) {
+  group <- num_vars_groups[[group_name]]
+  boxplot(datos[, group], las = 2, main = paste("Boxplot de Variables Numéricas (", group_name, ")", sep = ""))
+}
+```
