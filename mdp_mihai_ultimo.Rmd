@@ -4,7 +4,7 @@ output: word_document
 date: "2025-02-26"
 ---
 *Integrantes del grupo A1-18:* 
-                              - Germán Ríos-Capapé 
+                              - Germán Ríos-Capapé Gómez
                               - Jorge Acín Zurita 
                               - Mihai Cristian Mihalache Farcas 
                               - Robert Torres Mingarro 
