@@ -778,9 +778,16 @@ plot(silhouette(clust4$clustering, midist_euclidea), col=colores2, border=NA, ma
 #summary(validacion)
 ```
 
-```{r}
 
-```
+
+**REGLAS DE ASOCIACIÓN**
+
+No se han utilizado reglas de asociación en este proyecto porque no encajan con el tipo de estudio que se está realizando ni con el tipo de información con el que se está trabajando. Este tipo de técnica se emplea principalmente para descubrir relaciones frecuentes entre variables categóricas, como por ejemplo “si un jugador pertenece a cierto equipo y tiene cierta posición, entonces también suele cometer muchas faltas”. Sin embargo, el enfoque del proyecto está centrado en variables numéricas que reflejan el rendimiento deportivo, tales como goles, asistencias, tiros, intercepciones, minutos jugados, entre muchas otras.
+Además, los objetivos del estudio requieren herramientas estadísticas que no solo identifiquen patrones de aparición conjunta, sino que permitan modelar, clasificar y predecir comportamientos a partir de datos cuantitativos. Las reglas de asociación no están pensadas para ese tipo de análisis, ya que no trabajan con variables continuas ni ofrecen información sobre la influencia o el peso de cada variable en el resultado.
+Por todo ello, aplicar reglas de asociación en este proyecto no solo resultaría poco útil, sino que además no aportaría información relevante para los objetivos planteados.
+
+
+**ANÁLISIS DISCRIMINANTE**
 
 En el desarrollo de este proyecto, uno de los objetivos principales ha sido identificar de manera clara y fundamentada cómo las distintas estadísticas de juego de los futbolistas pueden estar relacionadas con su nivel de valor en el mercado. Para abordar este objetivo, se ha optado por aplicar un Análisis Discriminante Lineal (LDA), una técnica estadística multivariante que resulta especialmente útil cuando se pretende clasificar observaciones en categorías previamente definidas en función de múltiples variables predictoras.
 
