@@ -9,6 +9,8 @@ output:
 
 
 
+
+
 *Integrantes del grupo A1-18:*
 
   - Germán Ríos-Capapé Gómez
@@ -325,6 +327,7 @@ fviz_pca_var(res.pca, axes = c(5,6), repel = TRUE, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"))
 ```
 
+
 A partir de los gráficos de variables, observamos que las dimensiones 3 y 4 son las que presentan una mayor correlación con la variable auxiliar `valor_mercado`, ya que su vector se orienta en la misma dirección que varias variables relevantes en ese plano. Esto sugiere que estas dos dimensiones capturan información relacionada con el valor de mercado de los jugadores. Por el contrario, las dimensiones 5 y 6 apenas aportan información útil en este sentido, por lo que las descartamos para el análisis.
 
 Por tanto, nos centraremos principalmente en las dimensiones que van de la 1 a la 4. Aunque las dimensiones 1 y 2 no parecen estar directamente relacionadas con el valor de mercado, podrían estar reflejando otras características importantes, como el estilo o la posición del jugador. En los siguientes gráficos de scores analizaremos si estas dimensiones permiten diferenciar bien a los jugadores según su posición en el terreno de juego.
@@ -346,6 +349,7 @@ fviz_pca_ind(res.pca, axes = c(1,2), geom = "point", repel = TRUE, labelsize = 2
              select.ind = list("cos2"=500), habillage = "Pos", addEllipses = TRUE)
 
 ```
+
 En este gráfico de scores representamos a los jugadores según sus coordenadas en las dos primeras componentes principales del PCA, coloreados por su posición en el campo. Se puede observar que las posiciones se separan bastante bien en el plano formado por Dim1 y Dim2, lo que indica que estas dos primeras componentes explican con éxito la posición del jugador en el campo. 
 
 Por ejemplo, los delanteros *(FW)* se agrupan claramente en la parte izquierda, mientras que los defensores *(DF)* lo hacen más hacia la derecha. Los centrocampistas *(MF)* aparecen más centrados, como era de esperar, al estar a medio camino entre tareas defensivas y ofensivas. 
@@ -363,10 +367,10 @@ A diferencia del gráfico que acabamos de ver, como se anticipaba, en el gráfic
 
 (Ver Scree Plot en el Anexo 6)
 (Ver los gráficos de contribución en el Anexo 7 para comprobar qué variables influyen más en cada una de las primeras componentes)
-(Ver los biplots de las componentes 1–4 en el Anexo 8 para más detalle visual sobre la distribución y orientación de las variables y jugadores)
+(Ver los biplots de las componentes 1–4 en el Anexo 8 para más detalle visual sobre la distribución y orientación de las variables y jugadores).
 
 
-**VALIDACIÓN DEL MODELO PCA**
+## VALIDACIÓN DEL MODELO PCA
 
 Después de haber sacado las conclusiones pertinentes al realizar el Análisis de Componentes Principales, procederemos a la validación del modelo PCA, y a comprobar si todo lo que hemos realizado no ha estado condicionado por ningún anómalo que ha alterado nuestros resultados y conclusiones.
 
@@ -415,16 +419,15 @@ p2 = fviz_pca_ind(res.pca, axes = c(3,4), geom = c("point"),
 
 grid.arrange(p1,p2, nrow = 1)
 ```
+
 Los futbolistas atípicos se encuentran principalmente alejados del centro de la nube de puntos en las primeras 2 dimensiones, especialmente en dirección positiva de la segunda dimensión (arriba).En el plano de las dimensiones 3 y 4, los "outliers" también tienden a dispersarse lejos del centro, aunque de forma más equilibrada y colándose un individuo en el centro.
 
 Esto indica que las diferencias anómalas de estos jugadores se explican principalmente por las dos primeras dimensiones (que concentran ~40% de la varianza total).
 
 
 Los jugadores marcados como "TRUE" son casos potencialmente interesantes por su comportamiento extremo en múltiples combinaciones de variables. Esto puede utilizarse para:
-
--> Detectar perfiles únicos (p. ej., talentos o rendimientos extremos).
-
--> Considerarlos como casos atípicos que influyen en los modelos.
+  - Detectar perfiles únicos (p. ej., talentos o rendimientos extremos).
+  - Considerarlos como casos atípicos que influyen en los modelos.
 
 No obstante, mantendremos en el modelo a dichos jugadores porque, dado que estamos estudiando las estadísticas de los futbolistas de las 5 grandes ligas, es lógico que los jugadores con alto rendimiento estén contribuyendo mucho al modelo y no deberíamos excluirlos ya que pueden ayudarnos a entender ,por ejemplo, el valor de mercado, como veremos más adelante.
 
@@ -480,15 +483,15 @@ La estadístoca de CrsPA (Centros al área rival completados por partido) es ext
 
 Otras variables destacadas:
 
-- *PPA* (Pases al área rival): tiene un valor alto.
+  - *PPA* (Pases al área rival): tiene un valor alto.
 
-- *Pas3rd* (Pases al tercio ofensivo): también muy elevado.
+  - *Pas3rd* (Pases al tercio ofensivo): también muy elevado.
 
-- *Assists sin gol* y *SCA* (Acciones que acaban en tiro): por encima del promedio.
+  - *Assists sin gol* y *SCA* (Acciones que acaban en tiro): por encima del promedio.
 
-- *FlD* (Faltas recibidas) y *AerWon* (duelos aéreos ganados) : también por encima de la media.
+  - *FlD* (Faltas recibidas) y *AerWon* (duelos aéreos ganados) : también por encima de la media.
 
-- *TouAtt3rd* y *TouAttPen* (toques en el tercio/área ofensiva): son ligeramente elevados.
+  - *TouAtt3rd* y *TouAttPen* (toques en el tercio/área ofensiva): son ligeramente elevados.
 
 Por último, variables defensivas *(Tkl, Int, Blocks)* y de disciplina *(tarjetas, penaltis)*, contienen valores bajos o normales.
 
@@ -505,13 +508,13 @@ Confirmamos la posición de defensa (lateral), sin embargo, es posible que juegu
 
 
 
-**Distancia al modelo (SCR)**
+## Distancia al modelo (SCR)
 
 Ahora estudiaremos la distancia al modelo PCA mediante la Suma de Cuadrados Residual (SCR), que nos ayudará a detectar los valores anómalos moderados, es decir, aquellos futbolistas que no están bien explicados por el modelo PCA. Recordemos que los anómalos severos son aquellos detectados con el gráfico T2 de Hotelling pero que presentan una baja SCR.
 
 Para ello, primero calcularemos la matriz de residuos y, a partir de ella, la SCR.
 
-```{r }
+```{r , fig.width=5, fig.height=3}
 myE = X - misScores %*% t(misLoadings) 
 mySCR = rowSums(myE^2)  
 
@@ -537,6 +540,7 @@ chi2lim99 = g * qchisq(0.99, df = h)
 abline(h = chi2lim, col = "orange", lty = 2, lwd = 2)  # Línea para el 95%
 abline(h = chi2lim99, col = "red3", lty = 2, lwd = 2)  # Línea para el 99%
 ```
+
 El valor SCR mide qué tan bien se ajusta cada jugador al modelo PCA. Cuanto más alto es el SCR, peor representado está por las componentes seleccionadas.
 
 Los picos altos indican jugadores que no están representados correctamente por las primeras componentes principales.Esto  sugiere que tienen patrones únicos o raros que no son capturados por las dimensiones más relevantes del PCA.
@@ -565,7 +569,7 @@ Vamos a ver cómo averiguar qué características tienen estos futbolistas que l
 
 Como ejemplo, generaremos el gráfico de contribuciones para Rayan Cherki, una joven promesa del fútbol frances, que aparece en la lista de los SCR más elevados:
 
-```{r }
+```{r , fig.width=5, fig.height=3}
 ContriSCR = function(E, SCR) {
   # E es la matriz de residuos del modelo 
   # SCR es la suma de cuadrados residual
@@ -589,44 +593,45 @@ A partir del gráfico de contribuciones al SCR podemos sacar diversas conclusion
 
 Las variables que MÁS contribuyen POSITIVAMENTE, estas son las que causan atipicidad:
 
-- ScaDrib (regates exitosos que acaban en tiro), es claramente la variable dominante.
+- *ScaDrib* (regates exitosos que acaban en tiro), es claramente la variable dominante.
 
 Este jovencísimo francés se distingue por realizar numerosos regates que generan tiros, lo que lo aleja del comportamiento promedio. Este es el factor principal de su carácter atípico.
 
 También le ayudan a caracterizarse: 
 
-- BlkSh (tiros bloqueados por partido) y Clr (despejes por partido), sugieren que tiene también un papel activo en acciones defensivas, poco común en perfiles ofensivos.
+- *BlkSh* (tiros bloqueados por partido) y *Clr* (despejes por partido), sugieren que tiene también un papel activo en acciones defensivas, poco común en perfiles ofensivos.
 
-- Assists no goal (asistencias que acaban en tiro, aunque no en gol), estadística que refuerza aún más su rol de creador de ocasiones, incluso más allá de las asistencias directas.
+- *Assists no goal* (asistencias que acaban en tiro, aunque no en gol), estadística que refuerza aún más su rol de creador de ocasiones, incluso más allá de las asistencias directas.
 
 Por otra parte tenemos las variables con contribución NEGATIVA (representadas bien en el modelo):
 Estas variables ayudan a reducir su SCR, es decir, no contribuyen a su anormalidad. Tienen valores coherentes con el patrón general del conjunto:
 
-- Age: es joven, pero no excepcional en comparación con otros.
+- *Age*: es joven, pero no excepcional en comparación con otros.
 
-- Min (minutos jugados) negativo: puede que no haya jugado muchos, como muchos jóvenes.
+- *Min* (minutos jugados) negativo: puede que no haya jugado muchos, como muchos jóvenes.
 
-- Goals: valor típico, marca goles pero no destaca por ello.
+- *Goals*: valor típico, marca goles pero no destaca por ello.
 
-- Pas3rd (pases al tercio ofensivo): comportamiento estándar.
+- *Pas3rd* (pases al tercio ofensivo): comportamiento estándar.
 
 
 Todo esto consolida a Cherki como un jugador híbrido, creativo y participativo en defensa, lo que explica que el modelo PCA no logre captarlo bien en pocas dimensiones.
 
 
--> Conclusión sobre la validación del modelo PCA
+## Conclusión sobre la validación del modelo PCA
 
 Los resultados muestran que el modelo capta adecuadamente la estructura general de los datos, y que la mayoría de los jugadores se encuentran bien representados en el espacio reducido de componentes principales.
 
 Los casos que presentan valores atípicos en T² o SCR no corresponden a errores o problemas de modelado, sino que reflejan perfiles de jugadores extraordinarios, ya sea por un estilo de juego particularmente ofensivo, defensivo o híbrido, o bien por métricas singulares que los hacen sobresalir del patrón común. Es decir, se trata de futbolistas que simplemente se salen de la norma y, por tanto, aportan valor al análisis como ejemplos de diversidad en el rendimiento.
 
 
-**AFC**
+# AFC
 
 Aplicar un Análisis Factorial de Correspondencias (AFC) en este proyecto no sería una decisión adecuada, ya que esta técnica no se ajusta al tipo de datos ni a los objetivos planteados en el estudio. El AFC está diseñado específicamente para explorar relaciones entre variables categóricas, es decir, variables que representan grupos o etiquetas como la nacionalidad, la liga o la posición del jugador. En este trabajo, sin embargo, el análisis gira en torno a un conjunto amplio de variables numéricas que reflejan directamente el rendimiento de los futbolistas durante la temporada, como goles, minutos jugados, asistencias, disparos, entradas o regates.
 El AFC, al centrarse únicamente en variables cualitativas, no permite analizar adecuadamente este tipo de información, por lo que su uso no contribuiría a alcanzar ninguno de los objetivos del proyecto. Además, aunque el conjunto de datos incluye algunas variables categóricas, estas no son el eje central del análisis, sino que actúan más bien como contexto o referencia. Por tanto, aplicar un AFC desviaría el enfoque metodológico y no aportaría resultados útiles ni relevantes dentro de la lógica del trabajo.
 
-**Clustering**
+
+# Clustering
 
 Ahora pasaremos a realizar el clustering.
 
@@ -637,7 +642,7 @@ Dado que cada variable está medida en diferentes escalas y unidades (por ejempl
 
 Se utilizará la distancia euclídea como medida de distancia, ya que nos interesa agrupar futbolistas con valores similares en sus estadísticas de rendimiento y atributos técnicos. Al estar los datos centrados y escalados, la distancia euclídea permite que todas las variables aporten de forma equilibrada.
 
-```{r Clustering Matriz de Distancias}
+```{r Clustering Matriz de Distancias, fig.width=5, fig.height=3}
 # cogemos K = 16, para explicar un 80% de la variabilidad y además no tener variables incorreladas
 K = 16
 res.pca = PCA(datos2, scale.unit = FALSE, graph = FALSE, ncp = K, quali.sup = 1:5, quanti.sup = 57)
@@ -668,14 +673,14 @@ summary(myhopkins)
 
 El estadístico de Hopkins nos confirma una cierta tendencia de agrupamiento, puesto que ha sido calculado para diferentes valores de m (n en la función) y con diferentes semillas aleatorias y sus valores oscilan entre 0.79 y 0.81, es decir, están cercanos a 1. (*ANEXO 13*)
 
-*MODELOS JERÁRQUICOS*
+## MODELOS JERÁRQUICOS
 
-_MÉTODO DE WARD_
+### MÉTODO DE WARD
 
 En primer lugar, aplicaremos modelos jerárquicos, utilizando el método de Ward y el método de la media. Empezaremos por estimar el número óptimo de clusters:
 
 
-```{r Clustering WARD}
+```{r Clustering WARD, fig.width=5, fig.height=3}
 library(grid)
 library(gridExtra)
 p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
@@ -699,13 +704,13 @@ No realizamos el dendograma, debido a que contamos con demasiados jugadores, no 
 
 El método de la media lo descartamos ya que a mayoría de jugadores han sido agrupados en un solo cluster.(*Anexo 14*)
 
-*MÉTODOS DE PARTICIÓN*
+## MÉTODOS DE PARTICIÓN
 
-_K-MEDIAS_
+### K-MEDIAS
 
 En primer lugar, aplicaremos el algoritmo de k-medias y determinaremos el número óptimo de clusters para este algoritmo.
 
-```{r Clustering K-Medias}
+```{r Clustering K-Medias, fig.width=5, fig.height=3}
 p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = kmeans, method = "silhouette", 
              k.max = 10, verbose = FALSE) +
   labs(title = "K-means")
@@ -719,21 +724,21 @@ Aunque estadísticamente el número óptimo de clusters según Silhouette es 2, 
 
 Generamos, pues, los 3 clusters.
 
-```{r Clustering K-medias Clusters}
+```{r Clustering K-medias Clusters_}
 set.seed(100)
 clust3 <- kmeans(coords_pca_fut, centers = 3, nstart = 20)
 table(clust3$cluster)
 ```
 
-_K-MEDOIDES_
+### K-MEDOIDES
 
 Probaremos como última opción el método de los k-medoides que debería ser más robusto frente a los valores atípicos. Determinaremos, en primer lugar, el número óptimo de clusters.
 
-```{r Clustering K-Medoides}
-p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = pam, method = "silhouette", 
+```{r Clustering K-Medoides, fig.width=5, fig.height=3}
+p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = cluster::pam, method = "silhouette", 
              k.max = 10, verbose = FALSE) +
   labs(title = "Numero óptimo de clusters")
-p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = pam, method = "wss", 
+p2 = fviz_nbclust(x = coords_pca_fut, FUNcluster = cluster::pam, method = "wss", 
              k.max = 10, verbose = FALSE) +
   labs(title = "Numero óptimo de clusters")
 grid.arrange(p1, p2, nrow = 1)
@@ -748,17 +753,17 @@ Aunque el criterio estadístico óptimo es 2 clusters según ambos métodos, com
 Así, con k-medoides, la solución de 2 clusters es la más robusta, pero 4 o 5 pueden considerarse válidas si se prioriza la riqueza descriptiva sobre la máxima calidad estadística del agrupamiento. Los generamos:
 
 ```{r Clustering K-Medoides Clusters}
-clust4 <- pam(coords_pca_fut, k = 4)
+clust4 <- cluster::pam(coords_pca_fut, k = 4)
 table(clust4$clustering)
 ```
 
-_SELECCIÓN Y VALIDACIÓN DEL MÉTODO_
+## SELECCIÓN Y VALIDACIÓN DEL MÉTODO
 
 A la vista de los resultados anteriores, es difícil decantarse por un método en concreto ya que ofrecen resultados similares en algunos casos.
 
 Para tomar una decisión, analizaremos en primer lugar el coeficiente de Silhouette por cluster y por observación (no solamente el global como hasta ahora):
 
-```{r Clustering Validacion}
+```{r Clustering Validacion, fig.width=5, fig.height=3}
 library(ggsci)
 
 # Puedes ajustar el número de colores a tu número real de clusters
@@ -772,15 +777,15 @@ colores_pam <- pal_npg("nrc")(n_clusters_pam)
 
 par(mfrow = c(1,3))
 plot(
-  silhouette(grupos1, midist_euclidea),
+  cluster::silhouette(grupos1, midist_euclidea),
   col = colores_ward, border = NA, main = "WARD"
 )
 plot(
-  silhouette(clust3$cluster, midist_euclidea),
+  cluster::silhouette(clust3$cluster, midist_euclidea),
   col = colores_kmeans, border = NA, main = "K-MEDIAS"
 )
 plot(
-  silhouette(clust4$clustering, midist_euclidea),
+  cluster::silhouette(clust4$clustering, midist_euclidea),
   col = colores_pam, border = NA, main = "K-MEDOIDES"
 )
 ```
@@ -791,13 +796,14 @@ Optamos por K-medias con 3 clusters.
 
 Elegiremos, pues, el método de k-medias y conservamos los 3 clusters
 
-_INTERPRETACIÓN DE LOS RESULTADOS DEL CLUSTERING_
+## INTERPRETACIÓN DE LOS RESULTADOS DEL CLUSTERING
 
 En primer lugar, vamos a realizar un análisis de PCA completo para ver cuáles de las variables utilizadas en el clustering han contribuido más a la determinación de los clusters obtenidos mediante k-medias. (*ANEXO 16*)
 
 ```{r ANEXO Clustering PCA, include=FALSE}
 # Creamos el factor de clusters
 misclust <- factor(clust3$cluster)
+datosNumericos <- as.data.frame(datosNumericos)
 datosNumericos <- datosNumericos[, sapply(datosNumericos, is.numeric)]
 # Realizamos el PCA sobre la matriz de datos original
 miPCA <- PCA(datosNumericos, scale.unit = FALSE, graph = FALSE)
@@ -881,7 +887,7 @@ El Cluster 1 se asocia principalmente a roles defensivos, sobresaliendo en estad
 El Cluster 2 agrupa jugadores de perfil mixto o mediocampistas, con valores equilibrados tanto en acciones defensivas como en la circulación y recuperación del balón.
 El Cluster 3 representa a los jugadores ofensivos, con altas medias en goles, remates y acciones de ataque, pero una menor implicación en aspectos defensivos.
 
-```{r Custering Interpretacion Grafico}
+```{r Custering Interpretacion Grafico, fig.width=5, fig.height=3}
 par(mar = c(10, 4, 4, 2)) 
 
 matplot(
@@ -922,6 +928,7 @@ Respecto a la edad, apenas hay diferencias notorias, pero c1 tiene una ligera te
 Si nos fijamos en los minutos y partidos c1 juega más minutos en promedio, c3 menos.
 
 ```{r Clustering Interpretacion Boxplots}
+datosNumericos$valor_mercado <- datos$valor_mercado
 aggregate(valor_mercado ~ misclust, data = datosNumericos, mean)
 # Boxplot de valor_mercado por cluster
 boxplot(valor_mercado ~ misclust, data = datosNumericos,
@@ -941,14 +948,14 @@ boxplot(Min ~ misclust, data = datosNumericos,
         xlab = "Cluster", ylab = "Min", col= colores)
 ```
 
-**REGLAS DE ASOCIACIÓN**
+# REGLAS DE ASOCIACIÓN
 
 No se han utilizado reglas de asociación en este proyecto porque no encajan con el tipo de estudio que se está realizando ni con el tipo de información con el que se está trabajando. Este tipo de técnica se emplea principalmente para descubrir relaciones frecuentes entre variables categóricas, como por ejemplo “si un jugador pertenece a cierto equipo y tiene cierta posición, entonces también suele cometer muchas faltas”. Sin embargo, el enfoque del proyecto está centrado en variables numéricas que reflejan el rendimiento deportivo, tales como goles, asistencias, tiros, intercepciones, minutos jugados, entre muchas otras.
 Además, los objetivos del estudio requieren herramientas estadísticas que no solo identifiquen patrones de aparición conjunta, sino que permitan modelar, clasificar y predecir comportamientos a partir de datos cuantitativos. Las reglas de asociación no están pensadas para ese tipo de análisis, ya que no trabajan con variables continuas ni ofrecen información sobre la influencia o el peso de cada variable en el resultado.
-Por todo ello, aplicar reglas de asociación en este proyecto no solo resultaría poco útil, sino que además no aportaría información relevante para los objetivos planteados.
+Por todo ello, aplicar reglas de asociación en este proyecto no solo resultaría poco útil, sino que además no aportaría información relevante para los objetivos planteados.
 
 
-**ANÁLISIS DISCRIMINANTE**
+# ANÁLISIS DISCRIMINANTE
 
 En el desarrollo de este proyecto, uno de los objetivos principales ha sido identificar de manera clara y fundamentada cómo las distintas estadísticas de juego de los futbolistas pueden estar relacionadas con su nivel de valor en el mercado. Para abordar este objetivo, se ha optado por aplicar un Análisis Discriminante Lineal (LDA), una técnica estadística multivariante que resulta especialmente útil cuando se pretende clasificar observaciones en categorías previamente definidas en función de múltiples variables predictoras.
 
@@ -960,7 +967,7 @@ Además, se ha considerado que esta técnica puede facilitar la visualización d
 
 Por otra parte, como paso previo a la aplicación del análisis discriminante, se ha realizado una agrupación de los valores de mercado mediante k-means, con el fin de construir la variable categórica que será utilizada como criterio de clasificación. Esta decisión permite transformar una variable continua (el valor económico del jugador) en una variable categórica más adecuada para el análisis que se quiere realizar.  
 
-```{r Análisis Discriminante}
+```{r Análisis Discriminante, include=FALSE}
 datosNumericos = datos2[,descFut$tipo == "numerical"]
 datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League"))]
 datosNumericos = scale(datosNumericos, center = TRUE, scale = TRUE)
@@ -1020,15 +1027,19 @@ head(ajusteTest$x)  #  z (puntuaciones discriminantes)
 datosE = rbind(trainDatosWESC, testDatosWESC)
 plot.df <- data.frame(predict(modeloTR, newdata = datosE)$x, "Outcome" = datosE$valor_mercado_cat)
 library(ggplot2)
+```
+
+```{r plot_analisis_discriminante, fig.width=5, fig.height=3}
 ggplot(plot.df, aes(x = LD1, y = LD2, color = Outcome)) + geom_point()
 ```
 
-Resultados del análisis discriminante
-El modelo desarrollado para clasificar a los jugadores según su valor de mercado ha mostrado un desempeño muy sólido. En el gráfico, se observa claramente cómo los tres grupos (Bajo, Medio y Alto) están bien separados, sobre todo en el eje horizontal (LD1), que es el que más ayuda a distinguir entre los niveles. Los jugadores de valor bajo se agrupan a la izquierda, los de nivel medio en el centro, y los de valor alto a la derecha, formando tres zonas bien definidas. Esto indica que las características de los jugadores son lo suficientemente distintas como para que el modelo pueda clasificarlos de forma precisa.
+## Resultados del análisis discriminante 
+
+El modelo desarrollado para clasificar a los jugadores según su valor de mercado ha mostrado un desempeño muy sólido (*ANEXO 18*). En el gráfico, se observa claramente cómo los tres grupos (Bajo, Medio y Alto) están bien separados, sobre todo en el eje horizontal (LD1), que es el que más ayuda a distinguir entre los niveles. Los jugadores de valor bajo se agrupan a la izquierda, los de nivel medio en el centro, y los de valor alto a la derecha, formando tres zonas bien definidas. Esto indica que las características de los jugadores son lo suficientemente distintas como para que el modelo pueda clasificarlos de forma precisa.
 
 En cuanto a los resultados numéricos, la precisión del modelo alcanza un 97.36% en el conjunto de entrenamiento y un 96.66% en los datos de prueba, lo cual confirma que el modelo no solo aprende bien con los datos que ha visto, sino que también mantiene un buen rendimiento con datos nuevos. La puntuación Kappa, que mide la calidad del modelo teniendo en cuenta el azar, es muy alta: 0.9261 en entrenamiento y 0.9048 en prueba. Estos valores indican que el modelo tiene una capacidad de clasificación muy confiable.
 
-Al observar con más detalle las medidas por grupo, se ve que la sensibilidad (es decir, la capacidad del modelo para detectar correctamente a los jugadores de cada categoría) es perfecta para los de valor bajo, bastante alta para los de nivel medio (alrededor de 85 %) y también muy buena para los de valor alto (entre 86% y 95%). Además, la especificidad (es decir, cuán bien el modelo evita confundirlos con otras clases) es muy alta para todos los grupos, alcanzando incluso el 100 % en el caso de los jugadores de valor alto.
+Al observar con más detalle las medidas por grupo, se ve que la sensibilidad (es decir, la capacidad del modelo para detectar correctamente a los jugadores de cada categoría) es perfecta para los de valor bajo, bastante alta para los de nivel medio (alrededor de 85%) y también muy buena para los de valor alto (entre 86% y 95%). Además, la especificidad (es decir, cuán bien el modelo evita confundirlos con otras clases) es muy alta para todos los grupos, alcanzando incluso el 100% en el caso de los jugadores de valor alto.
 
 Esto se ve reflejado en la matriz de confusión, donde prácticamente no hay errores: por ejemplo, ningún jugador de valor bajo fue confundido con uno de valor alto, y los errores más comunes ocurren entre las clases "Bajo" y "Medio", lo cual es esperable, ya que estos grupos tienen perfiles más parecidos.
 
@@ -1040,13 +1051,16 @@ Finalmente, cuando se analiza la probabilidad con la que el modelo asigna una ca
 
 En conjunto, todos estos resultados muestran que el modelo no solo es muy preciso, sino también coherente: reconoce correctamente a los jugadores según su rendimiento y logra diferenciar claramente a los de mayor valor de mercado, que suelen tener un perfil ofensivo más destacado.
 
-**PLS**
 
-*Análisis PLS para los goles*
+
+# PLS
+
+## Análisis PLS para los goles
 
 A continuación, se realizará un análisis de regresión PLS (Partial Least Squares) para modelar y los goles de los jugadores a partir de sus variables numéricas. El objetivo es identificar qué combinación de variables explica mejor la variabilidad en la cantidad de goles y evaluar la capacidad predictiva del modelo.
 
-*Estimación del modelo y optimización del número de componentes*
+
+## Estimación del modelo y optimización del número de componentes
 
 Primero, seleccionamos las variables numéricas (menos los goles) como predictores (X) y los goles como variable respuesta (Y). Esto nos permitirá ajustar el modelo PLS para predecir el número de goles a partir de las estadísticas de los jugadores. Ajustamos el modelo PLS utilizando la función opls, que selecciona automáticamente el número óptimo de componentes mediante validación cruzada leave-one-out.
 
@@ -1072,6 +1086,7 @@ Y <- datos$Goals
 mypls = opls(x = X, y = Y, predI = NA, crossvalI = 50, scaleC = "standard",
              fig.pdfC = "none")
 ```
+
 El modelo PLS ajustado para predecir los goles de los jugadores muestra un ajuste y capacidad predictiva adecuados: R2X(cum) = 0.442 indica que el modelo explica el 44.2% de la variabilidad de las variables predictoras, mientras que R2Y(cum) = 0.67 muestra que el 67% de la variabilidad en el número de goles es explicada por el modelo. El valor Q2(cum) = 0.647 refleja una buena capacidad predictiva mediante validación cruzada y RMSEE = 1.33 indica un error de predicción moderado. El modelo utiliza 4 componentes latentes (pre = 4) y los valores ort, pR2Y y pQ2 (0, 0.05, 0.05) sugieren ausencia de sobreajuste y buena robustez. En resumen, el modelo PLS explica de forma razonable el número de goles a partir de las estadísticas de los jugadores, mostrando un equilibrio entre ajuste e interpretabilidad. De cualquier manera, vamos a generar nuestro propio gráfico para estimar mejor el número óptimo de componentes del modelo.
 
 ```{r plotNC}
@@ -1087,19 +1102,21 @@ abline(h = 0.5, col = "red3", lty = 2)
 legend("bottomleft", c("R2Y", "Q2"), lwd = 2, 
        col = c("blue3", "red3"), bty = "n")
 ```
+
 El gráfico muestra cómo los valores de R2Y (ajuste del modelo) y Q2 (capacidad predictiva) aumentan rápidamente hasta la tercera componente y luego se estabilizan, superando ampliamente el umbral de 0.5. Esto indica que, a partir de la tercera componente, añadir más componentes no mejora significativamente el modelo.
 
-Por todo esto, nos quedamos únicamente con las tres primeras componentes principales, volvemos a generar el modelo pero esta vez con 3.
+Por todo esto, nos quedamos únicamente con las tres primeras componentes principales, volvemos a generar el modelo pero esta vez con 3. (*ANEXO 19*)
 
-```{r selComps2}
+```{r selComps2, include=FALSE}
 A <- 3
 mypls = opls(x = X, y = Y, predI = A, crossvalI = 50, scaleC = "standard")
 ```
+
 En conclusión, aunque el modelo con cuatro componentes presenta un ajuste ligeramente superior (R2Y = 0.670, Q2 = 0.647, RMSEE = 1.33), la versión con tres componentes ofrece un rendimiento muy similar (R2Y = 0.658, Q2 = 0.642, RMSEE = 1.35), con la ventaja de ser más simple e interpretable. La pérdida de capacidad explicativa y predictiva es mínima, mientras que se gana en parsimonia y estabilidad. Por tanto, el modelo PLS con tres componentes se considera más adecuado  ya que mantiene un buen equilibrio entre rendimiento y simplicidad.
 
-**Validación del modelo**
+## Validación del modelo
 
-*Validación del modelo PLS*
+### Validación del modelo PLS
 
 La validación del modelo es un proceso fundamental para evaluar la capacidad predictiva y la robustez del modelo ajustado. Consiste en comprobar que el modelo no solo se ajusta bien a los datos de entrenamiento, sino que también generaliza correctamente a nuevos datos. En este caso, la validación se realiza principalmente mediante la evaluación de los valores de R² y Q², así como la interpretación gráfica de los scores y las relaciones entre componentes. No se realizará una detección adicional de valores atípicos o anómalos en esta etapa, ya que dicho análisis ya fue llevado a cabo previamente durante el preprocesamiento con el PCA, donde se identificaron y trataron las observaciones anómalas.
 
@@ -1113,15 +1130,16 @@ for (i in 1:3) {
 }
 diag(cor(mypls@scoreMN, mypls@uMN))
 ```
+
 Las correlaciones obtenidas muestran que existe una relación lineal moderada entre los scores (t) y las variables u en las dos primeras componentes (correlaciones = 0.61 y 0.59), mientras que en la tercera componente la relación es más débil (correlación = 0.39). Esto indica que las dos primeras componentes capturan la mayor parte de la relación lineal entre las variables predictoras y la respuesta, mientras que la tercera componente aporta información adicional pero menos relevante.
 
 Además, se realiza un cálculo más detallado del R² y Q², tanto acumulado como por variable, para evaluar en profundidad la capacidad explicativa y predictiva del modelo PLS. Esto permite identificar qué variables contribuyen más a la explicación y predicción de la variable respuesta (goles), y cómo evoluciona la calidad del modelo al añadir componentes.
 
 Para ello, se utiliza la función R2, que calcula el R² por variable y total, y se aplica sobre las matrices de predicción de X y Y generadas por el modelo PLS. Asimismo, se calcula Q² mediante validación cruzada, obteniendo así una visión más granular del rendimiento del modelo para cada variable y componente.
 
-Los resultados se visualizan mediante gráficos de barras apiladas, mostrando la contribución de cada componente al R² por variable, y permitiendo identificar las variables más relevantes en la explicación de la respuesta.
+Los resultados se visualizan mediante gráficos de barras apiladas, mostrando la contribución de cada componente al R² por variable, y permitiendo identificar las variables más relevantes en la explicación de la respuesta. (*ANEXO 20*)
 
-```{r R2}
+```{r R2, include=FALSE}
 R2 <- function(Y, myYpred){
   SCT_k <- apply(scale(Y), 2, function(i)sum(i^2))
   SCE_k <- apply(myYpred, 2, function(i) sum(i^2))
@@ -1251,40 +1269,38 @@ p2 <- ggplot(df_R2kY, aes(x = Variable, y = Rk2, fill = Componente)) +
        fill = "Componente") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  
-
+```
+```{r graficos_PLS}
 gridExtra::grid.arrange(p1, p2)  
 ```
+
 En el primer gráfico, observamos que las variables que más contribuyen al R² en el espacio X (predictoras) son principalmente aquellas relacionadas con el rendimiento ofensivo y la participación en el juego, como los tiros, asistencias y pases clave. Estas variables son explicadas en mayor medida por la primera componente, aunque la segunda y tercera también aportan información relevante en algunos casos. Esto indica que el modelo PLS identifica patrones complejos en el rendimiento de los jugadores, donde varias dimensiones estadísticas contribuyen de forma conjunta a explicar la variabilidad.
 
 Además, se aprecia que ciertas variables, como por ejemplo las relacionadas con la defensa o el juego aéreo, presentan una mayor contribución explicada por la segunda o tercera componente en lugar de la primera. Esto sugiere que estas variables capturan aspectos del rendimiento que no están directamente asociados con la dimensión principal del modelo, sino que requieren componentes adicionales para ser explicadas adecuadamente. Así, el modelo PLS permite descomponer la variabilidad en diferentes ejes latentes, facilitando la interpretación de cómo distintos grupos de variables se asocian a diferentes patrones de juego.
 
 En el segundo gráfico, la contribución de los componentes al R² en la variable respuesta (goles) muestra que la mayor parte de la variabilidad explicada se concentra en la primera componente, con aportes adicionales de la segunda y tercera. Esto sugiere que la relación entre las estadísticas individuales y el número de goles puede ser capturada de manera eficiente con pocas componentes latentes.
 
-**Interpretación del modelo PLS**
-
-Aunque ya se ha explorado parcialmente la interpretación del modelo durante la validación, en esta sección se profundiza en el análisis de los resultados obtenidos con el modelo PLS. Se examinan los scores y pesos de las componentes principales, así como los coeficientes de regresión, para identificar qué variables tienen mayor influencia en la predicción de los goles y cómo se distribuyen los jugadores en el espacio latente definido por el modelo. Esta interpretación permite comprender mejor la relación entre las estadísticas individuales y el rendimiento goleador, facilitando la extracción de conclusiones relevantes.
+## Medidas del error en la predicción
 
 ```{r}
-#par(mfrow = c(1,2))
-#plot(x =)
+Ypred = predict(mypls)
+residuos = Y - Ypred
+myRMSE = sqrt(mean(residuos^2))
+CVrmse = myRMSE / mean(Y)
+myRMSE
+CVrmse
 ```
 
+El valor obtenido para el error cuadrático medio de predicción (myRMSE = 1.35) indica que, en promedio, la diferencia entre los goles reales y los predichos por el modelo PLS es de aproximadamente 1.35 goles por jugador. Además, el coeficiente de variación del error (CVrmse = 0.91) muestra que el error representa cerca del 91% de la media de goles, lo que sugiere que, aunque el modelo capta ciertas tendencias generales, su capacidad predictiva individual es limitada y existe un margen considerable de mejora en la precisión de las predicciones.
+
+En conclusión, el análisis PLS realizado sobre las estadísticas de los jugadores ha permitido identificar las variables numéricas que más contribuyen a explicar y predecir el número de goles. El modelo muestra un ajuste razonable y una capacidad predictiva aceptable, aunque con margen de mejora, como reflejan los valores de R² y Q² y el coeficiente de variación del error. Las primeras componentes latentes capturan la mayor parte de la relación entre las estadísticas individuales y el rendimiento goleador, destacando especialmente las variables ofensivas como las más influyentes. Sin embargo, el error relativo respecto a la media de goles indica que, si bien el modelo capta tendencias generales, su precisión a nivel individual es limitada. En conjunto, el PLS proporciona una visión clara de los factores clave asociados al rendimiento goleador y constituye una base sólida para futuras mejoras o análisis complementarios.
 
 
 
-**ANEXOS**
 
--Anexo 1: ...
--Anexo 2: ...
--Anexo 3: ....
--Anexo 4: ...
--Anexo 5: ..
--Anexo 6: Scree plot
--Anexo 7: Gráficos de contribución de las variables a las primeras componentes
--Anexo 8: Biplots de las componentes principales
+# ANEXOS
 
-
-*ANEXO 1*
+## ANEXO 1
 ```{r anexo_1}
 # Mostrar las dimensiones del dataset
 dim(datos)
@@ -1296,8 +1312,7 @@ head(datos, 3)
 summary(datos)
 ```
 
-*ANEXO 2*
-
+## ANEXO 2
 ```{r anexo_2}
 summary(datos[,descFut$variable[descFut$tipo == "numerical"]])
 mySD = apply(datos[,descFut$variable[descFut$tipo == "numerical"]], 2, sd)
@@ -1306,8 +1321,8 @@ myCV = mySD/myMU
 sort(myCV)
 ```
 
-*ANEXO 3*
-```{r anexo_3}
+## ANEXO 3
+```{r anexo_3, fig.width=5, fig.height=3}
 # Excluir la variable "Min" de numerical_vars
 numerical_vars_without_min <- setdiff(numerical_vars, "Min")
 
@@ -1315,9 +1330,9 @@ par(mar = c(9,4,2,2))
 boxplot(datos[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Original)")
 
 ```
-*ANEXO 4*
 
-```{r anexo_4}
+## ANEXO 4
+```{r anexo_4, fig.width=5, fig.height=3}
 # Excluir la variable "Min" de numerical_vars
 numerical_vars_without_min <- setdiff(numerical_vars, "Min")
 # Aplicar una transformación logarítmica a las variables numéricas
@@ -1328,7 +1343,7 @@ par(mar = c(9,4,2,2))
 boxplot(datos_log[, numerical_vars_without_min], las = 2, main = "Boxplot de Variables Numéricas (Transformación Logarítmica)")
 ```
 
-*ANEXO 5*
+## ANEXO 5
 ```{r anexo_5}
 # Dividir las variables en grupos más pequeños para mejorar la legibilidad
 num_vars <- descFut$variable[descFut$tipo == "numerical"]
@@ -1355,7 +1370,7 @@ for (group_name in names(num_vars_groups)) {
 }
 ```
 
-*ANEXO 6: Scree plot*
+## ANEXO 6: Scree plot
 ```{r anexo_6}
 VPmedio = 100 * (1/nrow(eig.val))
 fviz_eig(res.pca, addlabels = TRUE) +
@@ -1363,24 +1378,24 @@ fviz_eig(res.pca, addlabels = TRUE) +
 kable(eig.val[1:20,])
 ```
 
-*ANEXO 7: Gráfico de scores de las componentes 3 y 4*
+## ANEXO 7: Gráfico de scores de las componentes 3 y 4
 ```{r anexo_7}
 graf_scores_34
 ```
 
-*ANEXO 8: T2 de Hotelling*
+## ANEXO 8: T2 de Hotelling
 ```{r anexo_8}
 plot(1:length(miT2), miT2, type = "p", xlab = "Jugadores", ylab = "T2")
 abline(h = F95, col = "orange", lty = 2, lwd = 2)
 abline(h = F99, col = "red3", lty = 2, lwd = 2)
 ```
 
-*ANEXO 9: Jugadores anómalos*
+## ANEXO 9: Jugadores anómalos
 ```{r anexo_9}
 datos2[which(miT2 > F99), "Player"]
 ```
 
-*ANEXO 10: Anómalo máximo*
+## ANEXO 10: Anómalo máximo
 ```{r anexo_10}
 # Selección y escalado de variables numéricas relevantes
 datosNumericos = datos2[,descFut$tipo == "numerical"]
@@ -1403,37 +1418,41 @@ barplot(mycontrisT2[,1],las=2, cex.names = 0.5,
 datos2[1619, c("Player", "Pos")]
 ```
 
-*ANEXO 10: Gráficos de contribución de las variables a las primeras componentes*
+## ANEXO 11: Gráficos de contribución de las variables a las primeras componentes
+
 A continuación, se muestran cuatro gráficos de barras que indican cuánto contribuye cada variable a la construcción de las primeras cuatro componentes principales. Cuanto mayor es la barra, mayor es la influencia de esa variable en la componente correspondiente.
-```{r}
+```{r anexo_11}
 fviz_contrib(res.pca, choice = "var", axes = 1)
 fviz_contrib(res.pca, choice = "var", axes = 2)
 fviz_contrib(res.pca, choice = "var", axes = 3)
 fviz_contrib(res.pca, choice = "var", axes = 4)
 ```
+
 Estos gráficos nos permiten interpretar el significado de cada dimensión: por ejemplo, en Dim1 predominan variables relacionadas con los pases y la actividad ofensiva y defensiva, mientras que en Dim2 tienen más peso las acciones en el tercio ofensivo como asistencias sin gol, centros o conducciones en zona de ataque. En Dim3 y Dim4 destacan variables defensivas como entradas y bloqueos, así como algunas estadísticas asociadas al valor de mercado —es decir, aquellas que en los gráficos de variables anteriores aparecían alineadas con la variable `valor_mercado`—, lo que refuerza la interpretación previa de que esas dimensiones capturan información más económica que posicional.
 
-*ANEXO 9: Biplots de las componentes principales*
-```{r}
+## ANEXO 12: Biplots de las componentes principales
+```{r anexo_12}
 fviz_pca_biplot(res.pca, axes = c(1,2), labelsize = 3,
                 label = "var", repel = TRUE, 
                 col.ind = datos$Pos)
 ```
+
 En este biplot representamos simultáneamente a los jugadores (como puntos) y a las variables originales (como flechas) en el plano formado por las dimensiones 1 y 2. Esta visualización nos permite observar cómo se distribuyen los jugadores según su posición, y qué variables influyen más en cada zona del gráfico.
 
 Podemos ver claramente que los delanteros (FW) se agrupan en la zona izquierda, donde predominan variables ofensivas como tiros o conducciones, mientras que los defensores (DF) se concentran a la derecha, cerca de variables relacionadas con despejes o intercepciones. Los centrocampistas (MF y MCO) aparecen más dispersos por el centro del gráfico, lo que tiene sentido dada su variedad de roles. También se puede observar que los carrileros (CAR) aparecen repartidos por todo el plano, lo cual tiene sentido dado su rol mixto entre defensa y ataque. Este gráfico refuerza la idea de que las primeras dos dimensiones del PCA separan bien a los jugadores según su función en el campo.
 
-```{r}
+```{r anexo_12_}
 fviz_pca_biplot(res.pca, axes = c(3,4), labelsize = 3,
                 label = "var", repel = TRUE, 
                 col.ind = datos$Pos)
 ```
+
 En este segundo biplot, donde se representan las dimensiones 3 y 4, no se aprecia una separación clara entre las posiciones. La mayoría de los puntos están muy concentrados en el centro del gráfico, y las flechas de las variables aparecen muy juntas entre sí.
 
 Esto sugiere que estas dimensiones no son tan útiles para clasificar a los jugadores por su rol o estilo de juego, aunque sí podrían estar capturando otras características más complejas o difíciles de interpretar, como el valor de mercado, tal y como vimos anteriormente en los gráficos de variables.
 
-*ANEXO 13: Estadístico de Hopkins*
-```{r ANEXO Clustering Hopkins}
+## ANEXO 13: Estadístico de Hopkins
+```{r ANEXO_13 Clustering Hopkins}
 set.seed(69)
 
 myN = c(20, 35)  
@@ -1448,11 +1467,11 @@ for (i in myN) {
 summary(myhopkins)
 ```
 
-*ANEXO 14: Método de la Media*
+## ANEXO 14: Método de la Media
 
 Estimamos a continuación el número óptimo de clusters para el método de la media.
 
-```{r ANEXO Clustering Media}
+```{r ANEXO_14 Clustering Media}
 p1 = fviz_nbclust(x = coords_pca_fut, FUNcluster = hcut, method = "silhouette", 
                   hc_method = "average", k.max = 10, verbose = FALSE, 
                   hc_metric = "euclidean") + labs(title = "Num. óptimo clusters")
@@ -1464,7 +1483,7 @@ grid.arrange(p1, p2, nrow = 1)
 
 El valor máximo de la silhouette se alcanza claramente para 2 clusters, pero los valores para 3, 4 y hasta 5 clusters siguen siendo relativamente altos (por encima de 0.4), lo que indica que la estructura de agrupamiento sigue siendo razonablemente buena con más de dos grupos. La suma de cuadrados dentro de los grupos disminuye de manera casi lineal, sin un codo muy marcado, aunque la pendiente se suaviza ligeramente a partir de 5 clusters. Probamos con 5 clusters:
 
-```{r  ANEXO Clustering Media Clusters}
+```{r  ANEXO_14 Clustering Media Clusters}
 clust2 <- hclust(midist_euclidea, method="average")
 grupos2 = cutree(clust2, k = 5)
 table(grupos2)
@@ -1472,11 +1491,11 @@ table(grupos2)
 
 La distribución resultante de los 5 clusters usando el método de la media (average) muestra que la gran mayoría de los jugadores (1792) han sido agrupados en un solo cluster, mientras que los otros cuatro clusters solo contienen 1 o 5 jugadores cada uno. Esto indica que el agrupamiento no es efectivo ni equilibrado: la partición no está captando subgrupos relevantes, sino que la mayoría de los datos quedan en un único grupo y los demás son prácticamente outliers. Por lo tanto lo descartamos.
 
-*ANEXO 15: NbClust*
+## ANEXO 15: NbClust
 
 Otra alternativa, es utilizar la librería NbClust, que aplica varios criterios y elegir el número de clusters más votado (por más criterios diferentes). Lo aplicaremos entre 2 y 6 clusters:
 
-```{r ANEXO Clustering NbClust}
+```{r ANEXO_15 Clustering NbClust}
 library(NbClust)
 library(clValid)
 res.nbclust <- NbClust(data = coords_pca_fut, diss =midist_euclidea , distance = NULL, 
@@ -1486,9 +1505,10 @@ res.nbclust <- NbClust(data = coords_pca_fut, diss =midist_euclidea , distance =
 
 Según el índice de Hubert y su segunda diferencia, el número óptimo de clusters sería 3. Esto coincide con otros métodos analizados previamente, que también sugerían entre 3 y 4 como opciones razonables. Por tanto, NbClust respalda la elección de 3 clusters como una solución adecuada para segmentar los futbolistas según sus características, aunque la diferencia con 4 o 5 clusters no es excesivamente marcada, por lo que siguen siendo alternativas válidas si se busca mayor riqueza interpretativa. Analizando el índice D y su segunda diferencia, el mayor cambio significativo se produce al pasar de 2 a 3 clusters, por lo que el número óptimo recomendado de grupos según este criterio es 3. 
 
-*ANEXO 16: Clustering - PCA*
+## ANEXO 16: Clustering - PCA
 
-```{r ANEXO Clustering PCA}
+```{r ANEXO_16 Clustering PCA}
+datosNumericos <- as.data.frame(datosNumericos)
 # Creamos el factor de clusters
 misclust <- factor(clust3$cluster)
 datosNumericos <- datosNumericos[, sapply(datosNumericos, is.numeric)]
@@ -1509,7 +1529,7 @@ fviz_eig(miPCA, addlabels = TRUE) +
 La mayor parte de la información se concentra en las primeras 3-4 componentes principales, por lo que para reducir la dimensionalidad, sería razonable quedarse con ellas.
 Los componentes posteriores explican poca varianza y aportan información marginal.
 
-```{r ANEXO Clustering PCA 1-2}
+```{r ANEXO_16 Clustering PCA 1-2}
 # Realiza el PCA con las variables correctas
 miPCA <- PCA(datosNumericos, scale.unit = TRUE, graph = FALSE)
 
@@ -1532,7 +1552,7 @@ p2 <- fviz_pca_var(miPCA, repel = TRUE)
 grid.arrange(p1, p2, nrow = 1)
 ```
 
-```{r ANEXO Custering PCA 3-4}
+```{r ANEXO_16 Custering PCA 3-4}
 # Visualización de los individuos en los ejes 3 y 4, coloreados por cluster
 p1 <- fviz_pca_ind(
   miPCA,
@@ -1554,9 +1574,8 @@ p2 <- fviz_pca_var(
 grid.arrange(p1, p2, nrow = 1)
 ```
 
-*ANEXO 17: Interpretación del Clustering Valores Medios*
-
-```{r ANEXO Custering Interpretacion}
+## ANEXO 17: Interpretación del Clustering Valores Medios
+```{r ANEXO_17}
 # Calcula la media de cada variable para cada cluster
 mediasCluster <- aggregate(datosNumericos, by = list("cluster" = misclust), mean)[,-1]
 
@@ -1566,4 +1585,205 @@ rownames(mediasCluster) <- paste0("c", 1:length(unique(misclust)))
 # Muestra la tabla (variables en filas, clusters en columnas)
 library(knitr)
 kable(t(round(mediasCluster, 2)))
+```
+
+## ANEXO 18: Análisis Discriminante
+```{r ANEXO_18}
+datosNumericos = datos2[,descFut$tipo == "numerical"]
+datosNumericos = datosNumericos[,setdiff(colnames(datosNumericos), c("Player", "Nation", "Pos", "Team", "League"))]
+datosNumericos = scale(datosNumericos, center = TRUE, scale = TRUE)
+datosNumericos <- as.data.frame(datosNumericos)
+
+# Aplicar k-means para agrupar en 3 categorías de valor_mercado
+set.seed(123)  # Para reproducibilidad
+k_clusters <- kmeans(datosNumericos$valor_mercado, centers = 3)
+datosNumericos$valor_mercado_cat <- factor(k_clusters$cluster)
+niveles_ordenados <- order(tapply(datosNumericos$valor_mercado, k_clusters$cluster, mean))
+datosNumericos$valor_mercado_cat <- factor(datosNumericos$valor_mercado_cat, 
+                                            levels = niveles_ordenados,
+                                            labels = c("Bajo", "Medio", "Alto"))
+
+# Ver tabla de frecuencias
+table(datosNumericos$valor_mercado_cat)
+
+set.seed(100)
+library(caret)
+library(MASS)
+trainFilas = createDataPartition(datosNumericos$valor_mercado_cat, p=0.8, list=FALSE)
+trainDatosW = datosNumericos[trainFilas,]
+testDatosW = datosNumericos[-trainFilas,]
+
+trainDatosW$valor_mercado_cat <- NULL
+testDatosW$valor_mercado_cat <- NULL
+
+trainDatosWESC = trainDatosW
+trainDatosWESC[,-1] = scale(trainDatosW[,-1], center = TRUE, scale = TRUE)
+testDatosWESC = testDatosW
+testDatosWESC[,-1] = scale(testDatosW[,-1], center = colMeans(trainDatosW[,-1]), 
+                     scale = apply(trainDatosW[,-1], 2, sd))
+
+trainDatosWESC$valor_mercado_cat <- datosNumericos[trainFilas,]$valor_mercado_cat
+modeloTR = lda(valor_mercado_cat ~ ., data = trainDatosWESC, CV = FALSE) 
+modeloTR$prior
+
+modeloTR$means
+
+head(modeloTR$scaling) # coeficientes de la FDL
+
+# Matriz de confusión para entrenamiento
+trainDatosW <- trainDatosWESC
+ajusteTR = predict(modeloTR)
+caret::confusionMatrix(ajusteTR$class, trainDatosW$valor_mercado_cat)
+
+# Matriz de confusión para test
+testDatosWESC$valor_mercado_cat <- datosNumericos[-trainFilas,]$valor_mercado_cat
+testDatosW <- testDatosWESC
+ajusteTest = predict(modeloTR, testDatosWESC)
+caret::confusionMatrix(ajusteTest$class, testDatosW$valor_mercado_cat)
+
+head(ajusteTest$posterior)
+
+head(ajusteTest$x)  #  z (puntuaciones discriminantes)
+
+datosE = rbind(trainDatosWESC, testDatosWESC)
+plot.df <- data.frame(predict(modeloTR, newdata = datosE)$x, "Outcome" = datosE$valor_mercado_cat)
+```
+
+## ANEXO 19: Modelo PLS
+```{r ANEXO_19}
+mypls
+```
+
+
+## ANEXO 20: R2 PLS
+```{r ANEXO_20 }
+R2 <- function(Y, myYpred){
+  SCT_k <- apply(scale(Y), 2, function(i)sum(i^2))
+  SCE_k <- apply(myYpred, 2, function(i) sum(i^2))
+  
+  # By variable
+  R2_k <- SCE_k/SCT_k
+  
+  # Total R2
+  R2 <- sum(SCE_k)/sum(SCT_k)
+  
+  list(R2_kcum = R2_k,
+       R2cum   = R2)
+
+}
+
+myT = mypls@scoreMN
+myP = mypls@loadingMN
+myXpred = myT%*%t(myP)
+R2X <- R2(X, myXpred)
+R2X
+
+myC <- mypls@cMN
+myYpred = myT%*%t(myC)
+R2Y <- R2(Y = Y, myYpred = myYpred)
+R2Y
+
+PLS_R2 <- function(A, X, Y){
+  
+  mypls = opls(x = X, y = Y, 
+             predI = A, 
+             crossvalI = 50, 
+             scaleC = "standard",
+             fig.pdfC = "none")
+  ### R2 for X space ####
+  myT = mypls@scoreMN
+  myP = mypls@loadingMN
+  myXpred = myT%*%t(myP)
+  R2X <- R2(X, myXpred)
+  
+  ### R2 for Y space ####
+  myC <- mypls@cMN
+  myYpred = myT%*%t(myC)
+  R2Y <- R2(Y = Y, myYpred = myYpred)
+  R2Y
+  
+  results <- list(R2X, R2Y)
+  names(results) <- c("EspacioX", "EspacioY")
+  results
+}
+
+result_all <- lapply(c(1:A), PLS_R2, X, Y)
+
+names(result_all) <- paste0( "comp", 1:A)
+
+
+# Hasta aquí, R2 acumulados. Calculemos por componente
+num_components <- length(result_all)  # Ajusta esto según la estructura de tu objeto
+# Inicializar listas para almacenar R2 incrementales para cada componente y para cada variable dentro de los componentes
+R2kX <- R2kY <- vector("list", num_components )
+R2X <- R2Y <- numeric(num_components)
+
+R2kX[[1]] <- result_all[[1]]$EspacioX$R2_kcum
+R2kY[[1]] <- result_all[[1]]$EspacioY$R2_kcum
+R2X[1] <- result_all[[1]]$EspacioX$R2cum
+R2Y[1] <- result_all[[1]]$EspacioY$R2cum
+
+
+# Calcular R2 incrementales para cada componente y para cada variable dentro de los componentes
+for (k in 2:num_components) {
+  # Calcula la diferencia entre los vectores de R2 acumulativos de componentes consecutivos para cada variable
+  R2kX[[k]] <- result_all[[k]]$EspacioX$R2_kcum - result_all[[k - 1]]$EspacioX$R2_kcum
+  R2kY[[k]] <- result_all[[k]]$EspacioY$R2_kcum - result_all[[k - 1]]$EspacioY$R2_kcum
+
+  R2X[k] <- result_all[[k]]$EspacioX$R2cum - result_all[[k - 1]]$EspacioX$R2cum
+  R2Y[k] <- result_all[[k]]$EspacioY$R2cum - result_all[[k - 1]]$EspacioY$R2cum
+}
+
+
+names(R2kX) <- paste0("comp", 1:A)
+names(R2kY) <- paste0("comp", 1:A)
+
+# Convertir la lista en un dataframe para ggplot R2kX
+df_R2kX <- do.call(rbind, lapply(seq_along(R2kX), function(i) {
+  data.frame(Componente = names(R2kX)[i],  # Usar los nombres de la lista como nombres de componentes
+             Variable = names(R2kX[[i]]),
+             Rk2 = as.numeric(R2kX[[i]]),
+             stringsAsFactors = FALSE)
+})) %>%
+  mutate(Componente = factor(Componente)) %>%
+  arrange(Variable, Componente)
+
+# Convertir la lista en un dataframe para ggplot R2kY
+df_R2kY <- do.call(rbind, lapply(seq_along(R2kY), function(i) {
+  data.frame(Componente = names(R2kY)[i],  # Usar los nombres de la lista como nombres de componentes
+             Variable = names(R2kY[[i]]),
+             Rk2 = as.numeric(R2kY[[i]]),
+             stringsAsFactors = FALSE)
+})) %>%
+  mutate(Componente = factor(Componente)) %>%
+  arrange(Variable, Componente)
+
+# Gráfico de barras apiladas con ggplot2
+# Seleccionar las 10 variables con mayor contribución total al R^2 en X
+top10_vars <- df_R2kX %>%
+    group_by(Variable) %>%
+    summarise(total_R2 = sum(Rk2, na.rm = TRUE)) %>%
+    arrange(desc(total_R2)) %>%
+    slice(1:10) %>%
+    pull(Variable)
+
+df_R2kX_top10 <- df_R2kX %>% filter(Variable %in% top10_vars)
+
+p1 <- ggplot(df_R2kX_top10, aes(x = Variable, y = Rk2, fill = Componente)) +
+    geom_bar(stat = "identity", position = "stack") +
+    scale_fill_viridis_d() +  # Usar paleta viridis discreta
+    labs(title = "Top 10 Variables: Contribución de Componentes al R^2 en X",
+             x = "Variable", y = "R^2",
+             fill = "Componente") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+p2 <- ggplot(df_R2kY, aes(x = Variable, y = Rk2, fill = Componente)) +
+  geom_bar(stat = "identity", position = "stack") +
+    scale_fill_viridis_d() +  # Usar paleta viridis discreta
+  labs(title = "Contribución de Componentes al R^2 por Variable en Y",
+       x = "Variable", y = "R^2",
+       fill = "Componente") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
 ```
