@@ -2,7 +2,7 @@
 
 Análisis estadístico multivariante del rendimiento de futbolistas de la temporada 2022-2023 en las 5 grandes ligas europeas (Premier League, La Liga, Bundesliga, Serie A, Ligue 1).
 
-📄 Memoria completa: `docs/Proyecto_Los_Datos_detras_del_Balon.pdf`
+📄 Memoria Completa:(./docs/Proyecto_Los_Datos_detras_del_Balon.pdf)
 
 Proyecto desarrollado en la asignatura **Métodos y Diseño de Programas I (MDP I)** del Grado en Ciencia de Datos de la Universitat Politècnica de València (UPV).
 
