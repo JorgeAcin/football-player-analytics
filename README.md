@@ -77,13 +77,24 @@ Hopkins statistic: 0.79–0.81 → clustering tendency confirmed.
 
 Classification of players into 3 market value levels (High / Medium / Low), built by applying k-means to the market value. The model uses only performance statistics as predictors; the market value itself is excluded (see the note below).
 
-Metrics are pending re-computation after the leakage fix.
+| Metric | Training | Test |
+|---|---|---|
+| **Accuracy** | 79.3% | 78.3% |
+| **Kappa** | 0.33 | 0.25 |
+
+About 77% of players fall in the Low category, so always predicting "Low" would already reach 77.2% accuracy. The LDA barely improves on this baseline (low kappa, poor recall for Medium and High), which indicates that performance statistics alone are weak predictors of a player's market value: factors not captured in the data (age profile, league, reputation, contract situation) play a major role.
 
 ### 5. PLS Regression — Goal Prediction
 
 PLS model with 3 latent components to predict goals from individual statistics. Variables that contain goals in their definition (`G/Sh`, goals per shot) are excluded from the predictors.
 
-Metrics are pending re-computation after the leakage fix.
+| Metric | Value |
+|---|---|
+| R²Y | 0.570 |
+| Q² (cross-validation) | ~0.555 |
+| RMSE | 1.52 goals |
+
+Offensive variables (shots, shot-creating actions, touches in the opponent's box) are the most influential predictors. The RMSE is computed on the training data and is roughly equal to the mean goals per player, so the model captures general trends but its individual-level precision is limited.
 
 > **Note — data leakage fix:** an earlier version of the analysis had data leakage. The LDA used `valor_mercado` as a predictor of its own category, which produced an inflated ~97% accuracy. The PLS included `G/Sh` among the predictors of goals. Both have been removed in `notebooks/Proyecto.Rmd`. The figures quoted in the notebook text and in the PDF report come from the earlier version and are no longer valid.
 
