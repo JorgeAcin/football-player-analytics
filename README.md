@@ -1,126 +1,128 @@
-# Los Datos detrás del Balón — Análisis de Jugadores de Fútbol
+# The Data Behind the Ball — Football Player Analytics
 
-Análisis estadístico multivariante del rendimiento de futbolistas de la temporada 2022-2023 en las 5 grandes ligas europeas (Premier League, La Liga, Bundesliga, Serie A, Ligue 1).
+Multivariate statistical analysis of football player performance in the 2022-2023 season across Europe's Big 5 leagues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1).
 
-📄 [Memoria Completa: Los Datos detrás del Balón](./docs/Proyecto_Los_Datos_detras_del_Balon.pdf)
+📄 [Full Report: Los Datos detrás del Balón (Spanish)](./docs/Proyecto_Los_Datos_detras_del_Balon.pdf)
 
-Proyecto desarrollado en la asignatura **Métodos y Diseño de Programas I (MDP I)** del Grado en Ciencia de Datos de la Universitat Politècnica de València (UPV).
+Project developed for the course **Métodos y Diseño de Programas I (MDP I)** in the Bachelor's Degree in Data Science at the Universitat Politècnica de València (UPV).
 
 ---
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 ├── data/
-│   ├── 2022-2023_Football_Player_Stats_original.xlsx    # Dataset original de Kaggle
-│   ├── 2022-2023_Football_Player_Stats.xlsx             # Dataset tras limpieza
-│   └── nombres_valores.xlsx                             # Valores de mercado (Transfermarkt)
+│   ├── 2022-2023_Football_Player_Stats_original.xlsx    # Original Kaggle dataset
+│   ├── 2022-2023_Football_Player_Stats.xlsx             # Cleaned dataset
+│   └── nombres_valores.xlsx                             # Market values (Transfermarkt)
 ├── scripts/
-│   └── besoccer_scraping.py                             # Scraping de valores de mercado
+│   └── besoccer_scraping.py                             # Early scraping attempt (BeSoccer), not used in the final dataset
 ├── notebooks/
-│   └── Proyecto.Rmd                                     # Análisis completo en R
+│   └── Proyecto.Rmd                                     # Full analysis in R
 ├── docs/
-│   └── Proyecto_Los_Datos_detras_del_Balon.pdf          # Memoria del proyecto
+│   └── Proyecto_Los_Datos_detras_del_Balon.pdf          # Project report
 └── README.md
 ```
 
 ---
 
-## Descripción General
+## Overview
 
-A partir de un dataset de **2.689 jugadores** (filtrado a ~1.920 tras limpieza), el proyecto aplica técnicas de análisis multivariante para:
+Starting from a dataset of **2,689 players** (filtered to ~1,920 after cleaning), the project applies multivariate analysis techniques to:
 
-1. **Segmentar jugadores por estilo de juego** mediante PCA y Clustering
-2. **Predecir el número de goles** de un jugador a partir de sus estadísticas (PLS Regression)
-3. **Clasificar el valor de mercado** (Alto / Medio / Bajo) mediante Análisis Discriminante Lineal
+1. **Segment players by playing style** using PCA and Clustering
+2. **Predict a player's number of goals** from their statistics (PLS Regression)
+3. **Classify market value** (High / Medium / Low) using Linear Discriminant Analysis
 
 ---
 
-## Metodología
+## Methodology
 
-### 1. Preprocesado y Limpieza
+### 1. Preprocessing and Cleaning
 
-- Filtrado de jugadores con < 5 partidos o < 200 minutos (no representativos)
-- Eliminación de porteros (sin variables relevantes para el análisis ofensivo/defensivo)
-- Deduplicación de jugadores con traspasos a mitad de temporada
-- Reagrupación de posiciones en 6 categorías: DF, CAR, MF, MCO, FW
-- Adición del **valor de mercado** obtenido mediante scraping de Transfermarkt (sept. 2022)
+- Removed players with < 5 matches or < 200 minutes (not representative)
+- Removed goalkeepers (no relevant variables for the offensive/defensive analysis)
+- Deduplicated players transferred mid-season
+- Regrouped positions into 5 categories: DF, CAR, MF, MCO, FW
+- Added **market value** from Transfermarkt (Sept. 2022), collected manually with AI assistance to speed up the process
 
-### 2. Análisis de Componentes Principales (PCA)
+### 2. Principal Component Analysis (PCA)
 
-- **4 componentes principales** retenidas (~50% de varianza explicada)
-- **Dim 1-2**: Separan claramente las posiciones de los jugadores (defensivos vs ofensivos)
-- **Dim 3-4**: Correlacionadas con el valor de mercado
-- Validación con **T² de Hotelling** (28 jugadores atípicos al 99%, incluyendo De Bruyne, Kroos, Mbappé) y **SCR** (distancia al modelo)
-- Los atípicos son jugadores excepcionales, no errores → se mantienen en el análisis
+- **4 principal components** retained
+- **Dim 1-2**: Clearly separate players by position (defensive vs offensive)
+- **Dim 3-4**: Correlated with market value
+- Validation with **Hotelling's T²** (28 outliers at 99%, including De Bruyne, Kroos, Mbappé) and **SCR** (distance to the model)
+- Outliers are exceptional players, not errors → kept in the analysis
 
 ### 3. Clustering
 
-Se compararon múltiples métodos para segmentar jugadores por estilo de juego:
+Several methods were compared to segment players by playing style:
 
-| Método | Clusters | Resultado |
+| Method | Clusters | Result |
 |---|---|---|
-| Ward (jerárquico) | 4 | Buena separación pero clusters desbalanceados |
-| Media (jerárquico) | 5 | Descartado — 1.792 jugadores en un solo cluster |
-| **K-Means** | **3** | **Mejor equilibrio y mayor interpretabilidad** |
-| K-Medoids (PAM) | 3 | Similar a K-Means, menor silhouette |
+| Ward (hierarchical) | 4 | Good separation but unbalanced clusters |
+| Average (hierarchical) | 5 | Discarded — 1,792 players in a single cluster |
+| **K-Means** | **3** | **Best balance and highest interpretability** |
+| K-Medoids (PAM) | 4 | Lower silhouette than K-Means |
 
-**Los 3 clusters identificados por K-Means:**
+**The 3 clusters identified by K-Means:**
 
-- **Cluster 1 — Defensivos**: Altos en despejes, bloqueos, duelos aéreos. Bajo valor de mercado medio
-- **Cluster 2 — Mixtos/Centrocampistas**: Equilibrio entre acciones ofensivas y defensivas. Valor de mercado medio
-- **Cluster 3 — Ofensivos**: Altos en goles, tiros, regates, toques en área rival. Mayor valor de mercado medio
+- **Cluster 1 — Defensive**: High in clearances, blocks, aerial duels. Lowest average market value
+- **Cluster 2 — Mixed/Midfielders**: Balance between offensive and defensive actions. Medium market value
+- **Cluster 3 — Offensive**: High in goals, shots, dribbles, touches in the opponent's box. Highest average market value
 
-Hopkins statistic: 0.79–0.81 → tendencia de agrupamiento confirmada.
+Hopkins statistic: 0.79–0.81 → clustering tendency confirmed.
 
-### 4. Análisis Discriminante Lineal (LDA)
+### 4. Linear Discriminant Analysis (LDA)
 
-Clasificación de jugadores en 3 niveles de valor de mercado (Alto / Medio / Bajo):
+Classification of players into 3 market value levels (High / Medium / Low):
 
-| Métrica | Entrenamiento | Test |
+| Metric | Training | Test |
 |---|---|---|
 | **Accuracy** | 97.36% | 96.66% |
 | **Kappa** | 0.926 | 0.905 |
 
-Los jugadores de valor alto destacan en acciones ofensivas (goles, asistencias, disparos, toques en área rival, regates). Los de valor bajo se asocian a roles defensivos con menor visibilidad. La separación en el eje LD1 es muy clara entre los tres grupos.
+High-value players stand out in offensive actions (goals, assists, shots, touches in the opponent's box, dribbles). Low-value players are associated with less visible defensive roles. Separation along the LD1 axis is very clear between the three groups.
 
-### 5. Regresión PLS — Predicción de Goles
+### 5. PLS Regression — Goal Prediction
 
-Modelo PLS con 3 componentes latentes para predecir goles a partir de estadísticas individuales:
+PLS model with 3 latent components to predict goals from individual statistics:
 
-| Métrica | Valor |
+| Metric | Value |
 |---|---|
 | R²Y | 0.658 |
-| Q² (validación cruzada) | 0.642 |
-| RMSE | 1.35 goles |
+| Q² (cross-validation) | 0.642 |
+| RMSE | 1.35 goals |
 
-Las variables más influyentes en la predicción de goles: tiros a puerta (SoT), goles por tiro (G/Sh), acciones que terminan en tiro (SCA), toques en el área rival (TouAttPen).
-
----
-
-## Fuentes de Datos
-
-- **[Kaggle — 2022/2023 Football Player Stats](https://www.kaggle.com/datasets/vivovinco/20222023-football-player-stats)** (basado en datos de FBref)
-- **Valores de mercado**: Transfermarkt (septiembre 2022), obtenidos mediante scraping
+Offensive variables (shots, shot-creating actions, touches in the opponent's box) are the most influential in predicting goals. The RMSE is computed on the training data and represents ~91% of the mean goals per player, so the model captures general trends but its individual-level precision is limited.
 
 ---
 
-## Tecnologías
+## Data Sources
 
-**R** — FactoMineR · factoextra · dplyr · corrplot · cluster · NbClust · MASS (LDA) · ropls (PLS) · caret · randomForest · ggplot2 · viridis
-
-**Python** — Scraping de valores de mercado (requests, pandas)
+- **[Kaggle — 2022/2023 Football Player Stats](https://www.kaggle.com/datasets/vivovinco/20222023-football-player-stats)** (based on FBref data)
+- **Market values**: Transfermarkt (September 2022), collected manually with AI assistance
 
 ---
 
-## Uso
+## Technologies
 
-Abre `notebooks/Proyecto.Rmd` en RStudio y haz clic en **Knit** para generar el informe completo.
+**R** — FactoMineR · factoextra · dplyr · corrplot · cluster · NbClust · MASS (LDA) · ropls (PLS) · caret · ggplot2 · viridis
+
+**Python** — Early market-value scraping attempt (Selenium, BeautifulSoup), not used in the final dataset
+
+---
+
+## Usage
+
+Open `notebooks/Proyecto.Rmd` in RStudio and click **Knit** to generate the full report.
+
+> **Note:** the notebook reads the Excel files by name only, so set the working directory to `data/` (or copy the Excel files next to the `.Rmd`) before knitting.
 
 ```r
 install.packages(c("readxl", "dplyr", "FactoMineR", "factoextra", "corrplot",
                    "gridExtra", "stringr", "writexl", "stringdist",
-                   "cluster", "ggsci", "randomForest", "caret", "knitr",
+                   "cluster", "ggsci", "caret", "knitr",
                    "ggplot2", "viridis", "MASS", "NbClust", "clValid"))
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -130,21 +132,21 @@ BiocManager::install("ropls")
 
 ---
 
-## Equipo
+## Team
 
-Aunque hubiese un responsable de cada tarea, todos los miembros contribuimos por igual y ayudamos en todas las partes del proyecto.
+Although each task had a lead, all members contributed equally and helped across every part of the project.
 
-| Miembro | Contribución |
+| Member | Contribution |
 |---|---|
-| **Jorge Acín Zurita** | Análisis discriminante, regresión PLS, visualización, scraping |
-| Germán Ríos-Capapé Gómez | Análisis discriminante, regresión PLS, visualización, scraping |
-| Mihai Cristian Mihalache Farcas | Limpieza, PCA, Clustering |
-| Robert Torres Mingarro | Análisis discriminante, regresión PLS, visualización, scraping |
-| Rubén Tormo Piles | Limpieza, PCA, Clustering |
+| **Jorge Acín Zurita** | Discriminant analysis, PLS regression, visualization, market value data collection |
+| Germán Ríos-Capapé Gómez | Discriminant analysis, PLS regression, visualization, market value data collection |
+| Mihai Cristian Mihalache Farcas | Cleaning, PCA, Clustering |
+| Robert Torres Mingarro | Discriminant analysis, PLS regression, visualization, market value data collection |
+| Rubén Tormo Piles | Cleaning, PCA, Clustering |
 
 ---
 
-Proyecto académico — Grado en Ciencia de Datos, Universitat Politècnica de València (UPV).
+Academic project — Bachelor's Degree in Data Science, Universitat Politècnica de València (UPV).
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-jorgeacin-blue?logo=linkedin)](https://linkedin.com/in/jorgeacin)
 [![GitHub](https://img.shields.io/badge/GitHub-JorgeAcin-black?logo=github)](https://github.com/JorgeAcin)
