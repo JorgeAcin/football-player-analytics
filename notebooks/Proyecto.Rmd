@@ -995,6 +995,10 @@ testDatosW = datosNumericos[-trainFilas,]
 trainDatosW$valor_mercado_cat <- NULL
 testDatosW$valor_mercado_cat <- NULL
 
+# valor_mercado define la variable objetivo: se excluye de los predictores para evitar fuga de información
+trainDatosW$valor_mercado <- NULL
+testDatosW$valor_mercado <- NULL
+
 trainDatosWESC = trainDatosW
 trainDatosWESC[,-1] = scale(trainDatosW[,-1], center = TRUE, scale = TRUE)
 testDatosWESC = testDatosW
@@ -1079,7 +1083,8 @@ library(viridis)
 library(gridExtra)
 
 # Selecciona las variables numéricas predictoras y la variable respuesta
-X <- datos[, setdiff(colnames(datos2), c("Goals", "Player", "Nation", "Pos", "Team", "League"))]
+# G/Sh (goles por tiro) contiene los goles en su definición: se excluye para evitar fuga de información
+X <- datos[, setdiff(colnames(datos2), c("Goals", "G/Sh", "Player", "Nation", "Pos", "Team", "League"))]
 Y <- datos$Goals
 
 # Ajusta el modelo PLS (por defecto, busca el número óptimo de componentes)
@@ -1615,6 +1620,10 @@ testDatosW = datosNumericos[-trainFilas,]
 
 trainDatosW$valor_mercado_cat <- NULL
 testDatosW$valor_mercado_cat <- NULL
+
+# valor_mercado define la variable objetivo: se excluye de los predictores para evitar fuga de información
+trainDatosW$valor_mercado <- NULL
+testDatosW$valor_mercado <- NULL
 
 trainDatosWESC = trainDatosW
 trainDatosWESC[,-1] = scale(trainDatosW[,-1], center = TRUE, scale = TRUE)

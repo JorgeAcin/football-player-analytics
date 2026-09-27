@@ -75,26 +75,17 @@ Hopkins statistic: 0.79–0.81 → clustering tendency confirmed.
 
 ### 4. Linear Discriminant Analysis (LDA)
 
-Classification of players into 3 market value levels (High / Medium / Low):
+Classification of players into 3 market value levels (High / Medium / Low), built by applying k-means to the market value. The model uses only performance statistics as predictors; the market value itself is excluded (see the note below).
 
-| Metric | Training | Test |
-|---|---|---|
-| **Accuracy** | 97.36% | 96.66% |
-| **Kappa** | 0.926 | 0.905 |
-
-High-value players stand out in offensive actions (goals, assists, shots, touches in the opponent's box, dribbles). Low-value players are associated with less visible defensive roles. Separation along the LD1 axis is very clear between the three groups.
+Metrics are pending re-computation after the leakage fix.
 
 ### 5. PLS Regression — Goal Prediction
 
-PLS model with 3 latent components to predict goals from individual statistics:
+PLS model with 3 latent components to predict goals from individual statistics. Variables that contain goals in their definition (`G/Sh`, goals per shot) are excluded from the predictors.
 
-| Metric | Value |
-|---|---|
-| R²Y | 0.658 |
-| Q² (cross-validation) | 0.642 |
-| RMSE | 1.35 goals |
+Metrics are pending re-computation after the leakage fix.
 
-Offensive variables (shots, shot-creating actions, touches in the opponent's box) are the most influential in predicting goals. The RMSE is computed on the training data and represents ~91% of the mean goals per player, so the model captures general trends but its individual-level precision is limited.
+> **Note — data leakage fix:** an earlier version of the analysis had data leakage. The LDA used `valor_mercado` as a predictor of its own category, which produced an inflated ~97% accuracy. The PLS included `G/Sh` among the predictors of goals. Both have been removed in `notebooks/Proyecto.Rmd`. The figures quoted in the notebook text and in the PDF report come from the earlier version and are no longer valid.
 
 ---
 
