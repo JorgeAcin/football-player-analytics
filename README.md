@@ -1,4 +1,4 @@
-# The Data Behind the Ball — Football Player Analytics
+# The Data Behind the Ball - Football Player Analytics
 
 Multivariate statistical analysis of football player performance in the 2022-2023 season across Europe's Big 5 leagues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1).
 
